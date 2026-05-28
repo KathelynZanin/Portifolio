@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfólio — Kathelyn Zanin</title>
+  <link rel="icon" href="img/K.png" type="image/x-icon">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+<div class="background">
+  <div class="ball ball1"></div>
+  <div class="ball ball2"></div>
+  <div class="ball ball3"></div>
+</div>
+
+<nav class="navbar" id="navbar">
+  <a href="#sobre">Sobre</a>
+  <a href="#certificados">Formação & Cursos</a>
+  <a href="#competencias">Competências</a>
+  <a href="#projetos">Projetos</a>
+  <a href="#contato">Contato</a>
+  <a href="#admin-area" id="admin-link" style="display:none;">Editar Portfólio</a>
+</nav>
+
+<div class="container">
+  <h1 id="saudacao"></h1>
+  <div class="hero-inner">
+    <div class="hero-foto">
+      <img src="img/foto.jpeg" alt="Foto de perfil de Kathelyn Zanin"
+           class="foto-perfil" id="fotoPerfilImg" onerror="this.src='img/K.png'">
+    </div>
+    <div class="hero-texto">
+      <h2 id="nome"></h2>
+      <p id="titulo"></p>
+      <p id="descricao"></p>
+      <div class="buttons" style="margin-top:16px">
+        <a href="#projetos" class="btn">Ver Projetos</a>
+        <a href="#contato"  class="btn">Entrar em Contato</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="link-balls">
+  <a href="https://github.com/KathelynZanin" class="link-ball github-ball" target="_blank" title="GitHub">
+    <i class="fab fa-github"></i>
+  </a>
+  <a href="mailto:kathelynzanin@gmail.com" class="link-ball email-ball" title="E-mail">
+    <i class="fas fa-envelope"></i>
+  </a>
+  <a href="https://www.linkedin.com/in/kathelynzanin/" class="link-ball linkedin-ball" target="_blank" title="LinkedIn">
+    <i class="fab fa-linkedin-in"></i>
+  </a>
+</div>
+
+<div class="about-me-container" id="sobre">
+  <div class="about-me">
+    <h2>Sobre Mim</h2>
+    <p id="sobreTexto"></p>
+    <p>Concluí o técnico em Administração na ETEC, onde desenvolvi habilidades de gestão e organização.</p>
+    <p>Agora, na FATEC, estou mergulhando no universo do desenvolvimento, aprendendo sobre front-end, back-end e muito mais.</p>
+    <p>Estou focada em aprender HTML, CSS, JavaScript, React e outras tecnologias modernas.</p>
+  </div>
+  <div class="skill-balloons">
+    <div class="skill-balloon">
+      <i class="fas fa-code"></i>
+      <h3>Aprendendo Front-end</h3>
+      <p>Estudando HTML, CSS, JavaScript, React e outras tecnologias web.</p>
+    </div>
+    <div class="skill-balloon">
+      <i class="fas fa-clipboard-list"></i>
+      <h3>Background em Administração</h3>
+      <p>Conhecimento em gestão, organização e processos empresariais.</p>
+    </div>
+    <div class="skill-balloon">
+      <i class="fas fa-lightbulb"></i>
+      <h3>Pensamento Analítico</h3>
+      <p>Habilidade em resolver problemas e aprender novas tecnologias rapidamente.</p>
+    </div>
+  </div>
+</div>
+
+
+<div class="education-container" id="certificados">
+  <h2>Formação Acadêmica & Cursos</h2>
+  <div class="education" id="lista-tudo">
+    <p class="loading">Carregando...</p>
+  </div>
+</div>
+
+
+<div class="skills-container" id="competencias">
+  <h2>Competências</h2>
+  <div class="skills-grid" id="skills-grid">
+    <p class="loading">Carregando competências...</p>
+  </div>
+</div>
+
+<div class="projects-container" id="projetos">
+  <h2>Projetos</h2>
+  <div id="lista-projetos">
+    <p class="loading">Carregando projetos...</p>
+  </div>
+</div>
+
+
+<div class="contact-container" id="contato">
+  <h2>Entre em Contato</h2>
+  <p>Se quiser conversar, fique à vontade para me chamar.</p>
+  <div class="contact-buttons">
+    <a class="button" href="https://github.com/KathelynZanin" target="_blank">
+      <i class="fab fa-github"></i> GitHub
+    </a>
+    <a class="button" href="mailto:kathelynzanin@gmail.com">
+      <i class="fas fa-envelope"></i> Email
+    </a>
+    <a class="button" href="https://www.linkedin.com/in/kathelynzanin/" target="_blank">
+      <i class="fab fa-linkedin"></i> LinkedIn
+    </a>
+  </div>
+</div>
+
+
+<button onclick="loginAdmin()" style="position:fixed;bottom:20px;right:20px;z-index:200;">
+  Admin
+</button>
+
+
+<div id="admin-area" class="admin-panel" style="display:none;">
+  <h2 class="admin-title">Painel Administrativo</h2>
+
+
+  <div class="admin-section">
+    <h3>✏️ Editar Portfólio</h3>
+    <label>Foto de perfil</label>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px;">
+      <img id="previewFoto" src="img/foto.jpeg" onerror="this.src='img/K.png'"
+           style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid #ff1493;">
+      <label class="admin-btn" style="cursor:pointer;padding:8px 18px;">
+        Escolher imagem
+        <input type="file" id="inputFoto" accept="image/*" style="display:none" onchange="previewFotoPerfil(this)">
+      </label>
+    </div>
+    <label>Nome</label>
+    <input id="editNome" placeholder="Seu nome">
+    <label>Título profissional</label>
+    <input id="editTitulo" placeholder="Ex: Desenvolvedora Front-end">
+    <label>Descrição curta</label>
+    <textarea id="editDescricao" placeholder="Descrição curta"></textarea>
+    <label>Texto Sobre Mim</label>
+    <textarea id="editSobre" placeholder="Texto sobre você"></textarea>
+    <button class="admin-btn" onclick="salvarPortfolio()">💾 Salvar Portfólio</button>
+  </div>
+
+
+  <div class="admin-section">
+    <h3>🎓 Adicionar Formação</h3>
+    <label>Instituição</label>
+    <input id="nomeFormacao" placeholder="Ex: FATEC">
+    <label>Curso</label>
+    <input id="cursoFormacao" placeholder="Nome do curso">
+    <label>Status</label>
+    <input id="statusFormacao" placeholder="Ex: Concluído ou Em andamento">
+    <button class="admin-btn" onclick="criarFormacao()">➕ Adicionar Formação</button>
+  </div>
+
+  
+  <div class="admin-section" id="edit-formacao-section" style="display:none;border-color:#ff69b4;">
+    <h3>✏️ Editando Formação</h3>
+    <input type="hidden" id="editFormacaoId">
+    <label>Instituição</label>
+    <input id="editFormacaoInst" placeholder="Instituição">
+    <label>Curso</label>
+    <input id="editFormacaoCurso" placeholder="Curso">
+    <label>Status</label>
+    <input id="editFormacaoStatus" placeholder="Status">
+    <div style="display:flex;gap:10px;">
+      <button class="admin-btn" onclick="salvarFormacao()">💾 Salvar</button>
+      <button class="admin-btn" style="background:#555;" onclick="cancelarEdicao('formacao')">Cancelar</button>
+    </div>
+  </div>
+
+ 
+  <div class="admin-section">
+    <h3>🏅 Adicionar Certificado</h3>
+    <label>Nome do curso/certificado</label>
+    <input id="nomeCert" placeholder="Ex: Escola de Inovadores">
+    <label>Instituição</label>
+    <input id="instCert" placeholder="Ex: INOVA CPS">
+    <label>Carga horária (horas)</label>
+    <input id="horaCert" type="number" placeholder="Ex: 40">
+    <label>Ano</label>
+    <input id="anoCert" type="number" placeholder="Ex: 2025">
+    <button class="admin-btn" onclick="criarCertificado()">➕ Adicionar Certificado</button>
+  </div>
+
+ 
+  <div class="admin-section" id="edit-cert-section" style="display:none;border-color:#ff69b4;">
+    <h3>✏️ Editando Certificado</h3>
+    <input type="hidden" id="editCertId">
+    <label>Nome</label>
+    <input id="editCertNome" placeholder="Nome">
+    <label>Instituição</label>
+    <input id="editCertInst" placeholder="Instituição">
+    <label>Carga horária</label>
+    <input id="editCertHora" type="number" placeholder="Horas">
+    <label>Ano</label>
+    <input id="editCertAno" type="number" placeholder="Ano">
+    <div style="display:flex;gap:10px;">
+      <button class="admin-btn" onclick="salvarCertificado()">💾 Salvar</button>
+      <button class="admin-btn" style="background:#555;" onclick="cancelarEdicao('cert')">Cancelar</button>
+    </div>
+  </div>
+
+ 
+  <div class="admin-section">
+    <h3>💻 Editar Competências</h3>
+    <label>Técnicas (separadas por vírgula)</label>
+    <textarea id="editTecnicas" rows="3" placeholder="HTML5, CSS3, JavaScript..."></textarea>
+    <label>Soft skills (separadas por vírgula)</label>
+    <textarea id="editSoftskills" rows="2" placeholder="Comunicação, Organização..."></textarea>
+    <button class="admin-btn" onclick="salvarCompetencias()">💾 Salvar Competências</button>
+  </div>
+
+ 
+  <div class="admin-section">
+    <h3>🚀 Adicionar Projeto</h3>
+    <label>Imagem do projeto</label>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px;">
+      <img id="previewProjeto" src=""
+           style="width:80px;height:60px;border-radius:10px;object-fit:cover;border:2px solid #ff1493;display:none;">
+      <label class="admin-btn" style="cursor:pointer;padding:8px 18px;">
+        Escolher imagem
+        <input type="file" id="imagemProjeto" accept="image/*" style="display:none" onchange="previewImgProjeto(this)">
+      </label>
+    </div>
+    <label>Nome do Projeto</label>
+    <input id="nomeProjeto" placeholder="Nome do projeto">
+    <label>Descrição</label>
+    <textarea id="descricaoProjeto" placeholder="Descrição do projeto"></textarea>
+    <label>Tecnologias (separadas por vírgula)</label>
+    <input id="tecsProjeto" placeholder="Ex: Python, Flask, MySQL">
+    <label>GitHub</label>
+    <input id="githubProjeto" placeholder="Link do GitHub">
+    <label>Site / Vercel</label>
+    <input id="vercelProjeto" placeholder="Link do site">
+    <button class="admin-btn" onclick="criarProjeto()">➕ Adicionar Projeto</button>
+  </div>
+
+  
+  <div class="admin-section" id="edit-projeto-section" style="display:none;border-color:#ff69b4;">
+    <h3>✏️ Editando Projeto</h3>
+    <input type="hidden" id="editProjetoId">
+    <label>Imagem do projeto</label>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px;">
+      <img id="previewEditProjeto" src=""
+           style="width:80px;height:60px;border-radius:10px;object-fit:cover;border:2px solid #ff1493;display:none;">
+      <label class="admin-btn" style="cursor:pointer;padding:8px 18px;">
+        Trocar imagem
+        <input type="file" id="editImagemProjeto" accept="image/*" style="display:none" onchange="previewImgEditProjeto(this)">
+      </label>
+    </div>
+    <label>Nome</label>
+    <input id="editProjetoNome" placeholder="Nome">
+    <label>Descrição</label>
+    <textarea id="editProjetoDesc" placeholder="Descrição"></textarea>
+    <label>Tecnologias (separadas por vírgula)</label>
+    <input id="editProjetoTecs" placeholder="Ex: Python, Flask">
+    <label>GitHub</label>
+    <input id="editProjetoGithub" placeholder="Link GitHub">
+    <label>Site / Vercel</label>
+    <input id="editProjetoSite" placeholder="Link do site">
+    <div style="display:flex;gap:10px;">
+      <button class="admin-btn" onclick="salvarProjeto()">💾 Salvar</button>
+      <button class="admin-btn" style="background:#555;" onclick="cancelarEdicao('projeto')">Cancelar</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = "http://localhost:5000";
+
+  
+  let portfolio = JSON.parse(localStorage.getItem("portfolio")) || {
+    nome: "Kathelyn Cauane de Oliveira Zanin",
+    titulo: "Dev Iniciante | Estudante de DSM | Explorando o mundo do desenvolvimento",
+    descricao: "Técnico em Administração pela ETEC, agora cursando Desenvolvimento de Software Multiplataforma na FATEC.",
+    sobre: "Sou estudante de Desenvolvimento de Software Multiplataforma apaixonada por tecnologia.",
+    foto: ""
+  };
+
+  function carregarPortfolio() {
+    document.getElementById("nome").textContent       = portfolio.nome;
+    document.getElementById("titulo").textContent     = portfolio.titulo;
+    document.getElementById("descricao").textContent  = portfolio.descricao;
+    document.getElementById("sobreTexto").textContent = portfolio.sobre;
+    if (portfolio.foto) {
+      document.getElementById("fotoPerfilImg").src = portfolio.foto;
+      const prev = document.getElementById("previewFoto");
+      if (prev) prev.src = portfolio.foto;
+    }
+  }
+
+  function previewFotoPerfil(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById("previewFoto").src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function salvarPortfolio() {
+    const fileInput = document.getElementById("inputFoto");
+    const file = fileInput.files[0];
+
+    const salvar = (fotoBase64) => {
+      portfolio.nome      = document.getElementById("editNome").value;
+      portfolio.titulo    = document.getElementById("editTitulo").value;
+      portfolio.descricao = document.getElementById("editDescricao").value;
+      portfolio.sobre     = document.getElementById("editSobre").value;
+      if (fotoBase64) portfolio.foto = fotoBase64;
+      localStorage.setItem("portfolio", JSON.stringify(portfolio));
+      carregarPortfolio();
+      alert("Portfólio atualizado!");
+    };
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = e => salvar(e.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      salvar(null);
+    }
+  }
+
+  
+  function atualizarSaudacao() {
+    const el = document.getElementById("saudacao");
+    if (!el) return;
+    const h = new Date().getHours();
+    el.textContent = h < 12 ? "Bom dia!" : h < 18 ? "Boa tarde!" : "Boa noite!";
+  }
+
+  window.onscroll = function () {
+    document.getElementById("navbar").classList.toggle("scrolled", document.documentElement.scrollTop > 50);
+  };
+
+  let modoAdmin = false;
+
+  function previewImgProjeto(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.getElementById("previewProjeto");
+      img.src = e.target.result;
+      img.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function previewImgEditProjeto(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.getElementById("previewEditProjeto");
+      img.src = e.target.result;
+      img.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function mostrarProjetos() {
+    const container = document.getElementById("lista-projetos");
+    try {
+      const res = await fetch(`${API}/projetos`);
+      const projetos = await res.json();
+      container.innerHTML = "";
+      if (projetos.length === 0) {
+        container.innerHTML = "<p style='color:#aaa'>Nenhum projeto ainda.</p>";
+        return;
+      }
+      projetos.forEach(p => {
+        const tecsTags = (p.tecnologias || []).map(t => `<span class="tag tag-tech">${t}</span>`).join("");
+        const imgHtml  = p.imagem
+          ? `<img src="${p.imagem}" alt="${p.nome}" style="width:100%;height:160px;object-fit:cover;border-radius:12px;margin:12px 0">`
+          : "";
+        container.innerHTML += `
+          <div class="project">
+            <h3 style="margin:0 0 4px">${p.nome}</h3>
+            ${imgHtml}
+            <p style="margin:8px 0">${p.descricao}</p>
+            <div class="tags" style="justify-content:center;margin:10px 0">${tecsTags}</div>
+            <div style="display:flex;justify-content:center;gap:10px;margin-top:10px">
+              ${p.github ? `<a href="${p.github}" target="_blank">GitHub</a>` : ""}
+              ${p.site   ? `<a href="${p.site}"   target="_blank">Ver Site</a>` : ""}
+            </div>
+            ${modoAdmin ? `
+              <div class="admin-buttons">
+                <button class="btn-editar"  onclick="abrirEditarProjeto(${p.id})">✏️ Editar</button>
+                <button class="btn-deletar" onclick="deletarProjeto(${p.id})">🗑 Deletar</button>
+              </div>` : ""}
+          </div>`;
+      });
+    } catch {
+      container.innerHTML = "<p style='color:#f88'>Erro ao conectar na API. Verifique se o Flask está rodando.</p>";
+    }
+  }
+
+  async function criarProjeto() {
+    const nome      = document.getElementById("nomeProjeto").value.trim();
+    const descricao = document.getElementById("descricaoProjeto").value.trim();
+    const tecs      = document.getElementById("tecsProjeto").value.split(",").map(t => t.trim()).filter(Boolean);
+    const github    = document.getElementById("githubProjeto").value.trim();
+    const site      = document.getElementById("vercelProjeto").value.trim();
+    const file      = document.getElementById("imagemProjeto").files[0];
+
+    if (!nome) { alert("Informe o nome do projeto."); return; }
+
+    const enviar = async (imagem) => {
+      await fetch(`${API}/projetos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome, descricao, tecnologias: tecs, imagem, github, site })
+      });
+      document.getElementById("nomeProjeto").value      = "";
+      document.getElementById("descricaoProjeto").value = "";
+      document.getElementById("tecsProjeto").value      = "";
+      document.getElementById("githubProjeto").value    = "";
+      document.getElementById("vercelProjeto").value    = "";
+      document.getElementById("imagemProjeto").value    = "";
+      const prev = document.getElementById("previewProjeto");
+      prev.src = ""; prev.style.display = "none";
+      mostrarProjetos();
+    };
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = e => enviar(e.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      enviar("");
+    }
+  }
+
+  async function deletarProjeto(id) {
+    if (!confirm("Deletar este projeto?")) return;
+    await fetch(`${API}/projetos/${id}`, { method: "DELETE" });
+    mostrarProjetos();
+  }
+
+
+  let _projetosCache = [];
+  async function abrirEditarProjeto(id) {
+    const res = await fetch(`${API}/projetos`);
+    _projetosCache = await res.json();
+    const p = _projetosCache.find(x => x.id === id);
+    if (!p) return;
+
+    document.getElementById("editProjetoId").value      = p.id;
+    document.getElementById("editProjetoNome").value    = p.nome;
+    document.getElementById("editProjetoDesc").value    = p.descricao;
+    document.getElementById("editProjetoTecs").value    = (p.tecnologias || []).join(", ");
+    document.getElementById("editProjetoGithub").value  = p.github;
+    document.getElementById("editProjetoSite").value    = p.site;
+
+    const prev = document.getElementById("previewEditProjeto");
+    if (p.imagem) { prev.src = p.imagem; prev.style.display = "block"; }
+    else          { prev.src = ""; prev.style.display = "none"; }
+
+    document.getElementById("edit-projeto-section").style.display = "flex";
+    document.getElementById("edit-projeto-section").scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function salvarProjeto() {
+    const id      = parseInt(document.getElementById("editProjetoId").value);
+    const nome    = document.getElementById("editProjetoNome").value.trim();
+    const desc    = document.getElementById("editProjetoDesc").value.trim();
+    const tecs    = document.getElementById("editProjetoTecs").value.split(",").map(t => t.trim()).filter(Boolean);
+    const github  = document.getElementById("editProjetoGithub").value.trim();
+    const site    = document.getElementById("editProjetoSite").value.trim();
+    const file    = document.getElementById("editImagemProjeto").files[0];
+
+    const projetoAtual = _projetosCache.find(x => x.id === id);
+    const imagemAtual  = projetoAtual ? projetoAtual.imagem : "";
+
+    const enviar = async (imagem) => {
+      await fetch(`${API}/projetos/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome, descricao: desc, tecnologias: tecs, imagem, github, site })
+      });
+      cancelarEdicao("projeto");
+      mostrarProjetos();
+    };
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = e => enviar(e.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      enviar(imagemAtual);
+    }
+  }
+
+  
+  async function mostrarTudo() {
+    const container = document.getElementById("lista-tudo");
+    try {
+      const [resF, resC] = await Promise.all([fetch(`${API}/formacoes`), fetch(`${API}/certificados`)]);
+      const formacoes    = await resF.json();
+      const certificados = await resC.json();
+      container.innerHTML = "";
+
+      formacoes.forEach(f => {
+        container.innerHTML += `
+          <div class="cert-card">
+            <div class="cert-icon"><i class="fas fa-graduation-cap"></i></div>
+            <h3>${f.instituicao}</h3>
+            <p><i class="fas fa-book" style="margin-right:5px;font-size:.8em"></i>${f.curso}</p>
+            <span class="cert-badge">${f.status}</span>
+            ${modoAdmin ? `
+              <div class="admin-buttons" style="margin-top:10px">
+                <button class="btn-editar"  onclick="abrirEditarFormacao(${f.id})">✏️ Editar</button>
+                <button class="btn-deletar" onclick="deletarFormacao(${f.id})">🗑 Deletar</button>
+              </div>` : ""}
+          </div>`;
+      });
+
+      certificados.forEach(c => {
+        container.innerHTML += `
+          <div class="cert-card">
+            <div class="cert-icon"><i class="fas fa-certificate"></i></div>
+            <h3>${c.nome}</h3>
+            <p><i class="fas fa-building" style="margin-right:5px;font-size:.8em"></i>${c.instituicao}</p>
+            <p><i class="fas fa-clock" style="margin-right:5px;font-size:.8em"></i>${c.carga_horaria}h &nbsp;|&nbsp; ${c.ano}</p>
+            <span class="cert-badge">Concluído</span>
+            ${modoAdmin ? `
+              <div class="admin-buttons" style="margin-top:10px">
+                <button class="btn-editar"  onclick="abrirEditarCert(${c.id})">✏️ Editar</button>
+                <button class="btn-deletar" onclick="deletarCertificado(${c.id})">🗑 Remover</button>
+              </div>` : ""}
+          </div>`;
+      });
+    } catch {
+      container.innerHTML = "<p style='color:#f88'>Erro ao conectar na API.</p>";
+    }
+  }
+
+  async function criarFormacao() {
+    const instituicao = document.getElementById("nomeFormacao").value.trim();
+    const curso       = document.getElementById("cursoFormacao").value.trim();
+    const status      = document.getElementById("statusFormacao").value.trim();
+    if (!instituicao) { alert("Informe a instituição."); return; }
+    await fetch(`${API}/formacoes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ instituicao, curso, status })
+    });
+    document.getElementById("nomeFormacao").value   = "";
+    document.getElementById("cursoFormacao").value  = "";
+    document.getElementById("statusFormacao").value = "";
+    mostrarTudo();
+  }
+
+  async function deletarFormacao(id) {
+    if (!confirm("Deletar esta formação?")) return;
+    await fetch(`${API}/formacoes/${id}`, { method: "DELETE" });
+    mostrarTudo();
+  }
+
+  let _formacoesCache = [];
+  async function abrirEditarFormacao(id) {
+    const res = await fetch(`${API}/formacoes`);
+    _formacoesCache = await res.json();
+    const f = _formacoesCache.find(x => x.id === id);
+    if (!f) return;
+    document.getElementById("editFormacaoId").value     = f.id;
+    document.getElementById("editFormacaoInst").value   = f.instituicao;
+    document.getElementById("editFormacaoCurso").value  = f.curso;
+    document.getElementById("editFormacaoStatus").value = f.status;
+    document.getElementById("edit-formacao-section").style.display = "flex";
+    document.getElementById("edit-formacao-section").scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function salvarFormacao() {
+    const id          = parseInt(document.getElementById("editFormacaoId").value);
+    const instituicao = document.getElementById("editFormacaoInst").value.trim();
+    const curso       = document.getElementById("editFormacaoCurso").value.trim();
+    const status      = document.getElementById("editFormacaoStatus").value.trim();
+    await fetch(`${API}/formacoes/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ instituicao, curso, status })
+    });
+    cancelarEdicao("formacao");
+    mostrarTudo();
+  }
+
+  
+  async function criarCertificado() {
+    const nome          = document.getElementById("nomeCert").value.trim();
+    const instituicao   = document.getElementById("instCert").value.trim();
+    const carga_horaria = parseInt(document.getElementById("horaCert").value) || 0;
+    const ano           = parseInt(document.getElementById("anoCert").value)  || 2025;
+    if (!nome) { alert("Informe o nome do certificado."); return; }
+    await fetch(`${API}/certificados`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome, instituicao, carga_horaria, ano })
+    });
+    document.getElementById("nomeCert").value = "";
+    document.getElementById("instCert").value = "";
+    document.getElementById("horaCert").value = "";
+    document.getElementById("anoCert").value  = "";
+    mostrarTudo();
+  }
+
+  async function deletarCertificado(id) {
+    if (!confirm("Remover este certificado?")) return;
+    await fetch(`${API}/certificados/${id}`, { method: "DELETE" });
+    mostrarTudo();
+  }
+
+  let _certsCache = [];
+  async function abrirEditarCert(id) {
+    const res = await fetch(`${API}/certificados`);
+    _certsCache = await res.json();
+    const c = _certsCache.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById("editCertId").value   = c.id;
+    document.getElementById("editCertNome").value = c.nome;
+    document.getElementById("editCertInst").value = c.instituicao;
+    document.getElementById("editCertHora").value = c.carga_horaria;
+    document.getElementById("editCertAno").value  = c.ano;
+    document.getElementById("edit-cert-section").style.display = "flex";
+    document.getElementById("edit-cert-section").scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function salvarCertificado() {
+    const id            = parseInt(document.getElementById("editCertId").value);
+    const nome          = document.getElementById("editCertNome").value.trim();
+    const instituicao   = document.getElementById("editCertInst").value.trim();
+    const carga_horaria = parseInt(document.getElementById("editCertHora").value) || 0;
+    const ano           = parseInt(document.getElementById("editCertAno").value)  || 2025;
+    await fetch(`${API}/certificados/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nome, instituicao, carga_horaria, ano })
+    });
+    cancelarEdicao("cert");
+    mostrarTudo();
+  }
+
+  // ── COMPETÊNCIAS ──────────────────────────────────────────
+  async function mostrarCompetencias() {
+    const grid = document.getElementById("skills-grid");
+    try {
+      const res  = await fetch(`${API}/competencias`);
+      const comp = await res.json();
+      const tecTags  = (comp.tecnicas      || []).map(t => `<span class="tag tag-tech">${t}</span>`).join("");
+      const softTags = (comp.interpessoais || []).map(t => `<span class="tag tag-soft">${t}</span>`).join("");
+      grid.innerHTML = `
+        <div class="skills-group">
+          <h3><i class="fas fa-laptop-code"></i> Competências Técnicas</h3>
+          <div class="tags">${tecTags}</div>
+        </div>
+        <div class="skills-group">
+          <h3><i class="fas fa-users"></i> Soft Skills</h3>
+          <div class="tags">${softTags}</div>
+        </div>`;
+      
+      if (modoAdmin) {
+        document.getElementById("editTecnicas").value   = (comp.tecnicas      || []).join(", ");
+        document.getElementById("editSoftskills").value = (comp.interpessoais || []).join(", ");
+      }
+    } catch {
+      grid.innerHTML = "<p style='color:#f88'>Erro ao conectar na API.</p>";
+    }
+  }
+
+  async function salvarCompetencias() {
+    const tecnicas      = document.getElementById("editTecnicas").value.split(",").map(t => t.trim()).filter(Boolean);
+    const interpessoais = document.getElementById("editSoftskills").value.split(",").map(t => t.trim()).filter(Boolean);
+    await fetch(`${API}/competencias`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tecnicas, interpessoais })
+    });
+    mostrarCompetencias();
+    alert("Competências atualizadas!");
+  }
+
+
+  function loginAdmin() {
+    const senha = prompt("Digite a senha de administrador:");
+    if (senha === "1234") {
+      modoAdmin = true;
+      document.getElementById("admin-area").style.display = "block";
+      const adminLink = document.getElementById("admin-link");
+      if (adminLink) adminLink.style.display = "inline-block";
+      // preencher campos
+      document.getElementById("editNome").value      = portfolio.nome;
+      document.getElementById("editTitulo").value    = portfolio.titulo;
+      document.getElementById("editDescricao").value = portfolio.descricao;
+      document.getElementById("editSobre").value     = portfolio.sobre;
+      mostrarProjetos();
+      mostrarTudo();
+      mostrarCompetencias();
+      alert("Modo administrador ativado!");
+    } else {
+      alert("Senha incorreta.");
+    }
+  }
+
+  function cancelarEdicao(tipo) {
+    if (tipo === "formacao") {
+      document.getElementById("edit-formacao-section").style.display = "none";
+    } else if (tipo === "cert") {
+      document.getElementById("edit-cert-section").style.display = "none";
+    } else if (tipo === "projeto") {
+      document.getElementById("edit-projeto-section").style.display = "none";
+      document.getElementById("editImagemProjeto").value = "";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    carregarPortfolio();
+    atualizarSaudacao();
+    mostrarProjetos();
+    mostrarTudo();
+    mostrarCompetencias();
+  });
+</script>
+</body>
+</html>
