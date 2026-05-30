@@ -229,13 +229,14 @@
   <div class="admin-section">
     <h3>🚀 Adicionar Projeto</h3>
     <label>Imagem do projeto</label>
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px;">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
       <img id="previewProjeto" src=""
            style="width:80px;height:60px;border-radius:10px;object-fit:cover;border:2px solid #ff1493;display:none;">
-      <label class="admin-btn" style="cursor:pointer;padding:8px 18px;">
+      <label class="admin-btn" style="cursor:pointer;padding:8px 18px;" id="btnEscolherImagem">
         Escolher imagem
         <input type="file" id="imagemProjeto" accept="image/*" style="display:none" onchange="previewImgProjeto(this)">
       </label>
+      <span id="uploadStatus" style="color:#aaa;font-size:0.85em;"></span>
     </div>
     <label>Nome do Projeto</label>
     <input id="nomeProjeto" placeholder="Nome do projeto">
@@ -255,13 +256,14 @@
     <h3>✏️ Editando Projeto</h3>
     <input type="hidden" id="editProjetoId">
     <label>Imagem do projeto</label>
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px;">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
       <img id="previewEditProjeto" src=""
            style="width:80px;height:60px;border-radius:10px;object-fit:cover;border:2px solid #ff1493;display:none;">
-      <label class="admin-btn" style="cursor:pointer;padding:8px 18px;">
+      <label class="admin-btn" style="cursor:pointer;padding:8px 18px;" id="btnEditarImagem">
         Trocar imagem
         <input type="file" id="editImagemProjeto" accept="image/*" style="display:none" onchange="previewImgEditProjeto(this)">
       </label>
+      <span id="editUploadStatus" style="color:#aaa;font-size:0.85em;"></span>
     </div>
     <label>Nome</label>
     <input id="editProjetoNome" placeholder="Nome">
@@ -283,6 +285,39 @@
 
 <script>
   const API = "https://portifolio-production-3e83.up.railway.app";
+
+  // Helper para fetch autenticado (POST/PUT/DELETE)
+  function adminFetch(url, method, body) {
+    return fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Admin-Token": "1234"
+      },
+      body: JSON.stringify(body)
+    });
+  }
+
+  // Upload de imagem para o Cloudinary
+  // IMPORTANTE: no painel do Cloudinary crie um Upload Preset chamado "portfolio_upload"
+  // Settings > Upload > Upload Presets > Add > Signing Mode: Unsigned
+  async function uploadCloudinary(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "portfolio_upload");
+    try {
+      const res = await fetch("https://api.cloudinary.com/v1_1/djbuniysj/image/upload", {
+        method: "POST",
+        body: formData
+      });
+      if (!res.ok) { console.error("Cloudinary error", await res.text()); return null; }
+      const data = await res.json();
+      return data.secure_url;
+    } catch (e) {
+      console.error("Cloudinary upload failed", e);
+      return null;
+    }
+  }
 
   
   let portfolio = JSON.parse(localStorage.getItem("portfolio")) || {
@@ -410,8 +445,8 @@
               </div>` : ""}
           </div>`;
       });
-    } catch {
-      container.innerHTML = "<p style='color:#f88'>Erro ao conectar na API.</p>";
+    } catch (e) {
+      container.innerHTML = `<p style='color:#f88'>Erro ao conectar na API: ${e.message}</p>`;
     }
   }
 
@@ -421,39 +456,35 @@
     const tecs      = document.getElementById("tecsProjeto").value.split(",").map(t => t.trim()).filter(Boolean);
     const github    = document.getElementById("githubProjeto").value.trim();
     const site      = document.getElementById("vercelProjeto").value.trim();
-    const file      = document.getElementById("imagemProjeto").files[0];
+    const file = document.getElementById("imagemProjeto").files[0];
 
     if (!nome) { alert("Informe o nome do projeto."); return; }
 
-    const enviar = async (imagem) => {
-      await fetch(`${API}/projetos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, descricao, tecnologias: tecs, imagem, github, site })
-      });
-      document.getElementById("nomeProjeto").value      = "";
-      document.getElementById("descricaoProjeto").value = "";
-      document.getElementById("tecsProjeto").value      = "";
-      document.getElementById("githubProjeto").value    = "";
-      document.getElementById("vercelProjeto").value    = "";
-      document.getElementById("imagemProjeto").value    = "";
-      const prev = document.getElementById("previewProjeto");
-      prev.src = ""; prev.style.display = "none";
-      mostrarProjetos();
-    };
-
+    const statusEl = document.getElementById("uploadStatus");
+    let imagem = "";
     if (file) {
-      const reader = new FileReader();
-      reader.onload = e => enviar(e.target.result);
-      reader.readAsDataURL(file);
-    } else {
-      enviar("");
+      statusEl.textContent = "Enviando imagem...";
+      imagem = await uploadCloudinary(file);
+      if (!imagem) { statusEl.textContent = "Falha no upload da imagem."; return; }
+      statusEl.textContent = "";
     }
+
+    const res = await adminFetch(`${API}/projetos`, "POST", { nome, descricao, tecnologias: tecs, imagem, github, site });
+    if (!res.ok) { const e = await res.json(); alert("Erro: " + e.erro); return; }
+    document.getElementById("nomeProjeto").value      = "";
+    document.getElementById("descricaoProjeto").value = "";
+    document.getElementById("tecsProjeto").value      = "";
+    document.getElementById("githubProjeto").value    = "";
+    document.getElementById("vercelProjeto").value    = "";
+    document.getElementById("imagemProjeto").value    = "";
+    const prev = document.getElementById("previewProjeto");
+    prev.src = ""; prev.style.display = "none";
+    mostrarProjetos();
   }
 
   async function deletarProjeto(id) {
     if (!confirm("Deletar este projeto?")) return;
-    await fetch(`${API}/projetos/${id}`, { method: "DELETE" });
+    await adminFetch(`${API}/projetos/${id}`, "DELETE", {});
     mostrarProjetos();
   }
 
@@ -472,6 +503,7 @@
     document.getElementById("editProjetoTecs").value    = (p.tecnologias || []).join(", ");
     document.getElementById("editProjetoGithub").value  = p.github;
     document.getElementById("editProjetoSite").value    = p.site;
+    document.getElementById("editImagemProjeto").value  = p.imagem || "";
 
     const prev = document.getElementById("previewEditProjeto");
     if (p.imagem) { prev.src = p.imagem; prev.style.display = "block"; }
@@ -488,28 +520,23 @@
     const tecs    = document.getElementById("editProjetoTecs").value.split(",").map(t => t.trim()).filter(Boolean);
     const github  = document.getElementById("editProjetoGithub").value.trim();
     const site    = document.getElementById("editProjetoSite").value.trim();
-    const file    = document.getElementById("editImagemProjeto").files[0];
-
+    const file2        = document.getElementById("editImagemProjeto").files[0];
     const projetoAtual = _projetosCache.find(x => x.id === id);
-    const imagemAtual  = projetoAtual ? projetoAtual.imagem : "";
+    let imagem         = projetoAtual ? projetoAtual.imagem : "";
 
-    const enviar = async (imagem) => {
-      await fetch(`${API}/projetos/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, descricao: desc, tecnologias: tecs, imagem, github, site })
-      });
-      cancelarEdicao("projeto");
-      mostrarProjetos();
-    };
-
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = e => enviar(e.target.result);
-      reader.readAsDataURL(file);
-    } else {
-      enviar(imagemAtual);
+    if (file2) {
+      const statusEl = document.getElementById("editUploadStatus");
+      statusEl.textContent = "Enviando imagem...";
+      const url = await uploadCloudinary(file2);
+      if (!url) { statusEl.textContent = "Falha no upload da imagem."; return; }
+      imagem = url;
+      statusEl.textContent = "";
     }
+
+    const res = await adminFetch(`${API}/projetos/${id}`, "PUT", { nome, descricao: desc, tecnologias: tecs, imagem, github, site });
+    if (!res.ok) { const e = await res.json(); alert("Erro: " + e.erro); return; }
+    cancelarEdicao("projeto");
+    mostrarProjetos();
   }
 
   
@@ -517,6 +544,8 @@
     const container = document.getElementById("lista-tudo");
     try {
       const [resF, resC] = await Promise.all([fetch(`${API}/formacoes`), fetch(`${API}/certificados`)]);
+      if (!resF.ok) throw new Error("Erro ao buscar formações: " + resF.status);
+      if (!resC.ok) throw new Error("Erro ao buscar certificados: " + resC.status);
       const formacoes    = await resF.json();
       const resDataC = await resC.json();
       const certificados = resDataC.certificados ?? resDataC;
@@ -552,8 +581,8 @@
               </div>` : ""}
           </div>`;
       });
-    } catch {
-      container.innerHTML = "<p style='color:#f88'>Erro ao conectar na API.</p>";
+    } catch (e) {
+      container.innerHTML = `<p style='color:#f88'>Erro ao conectar na API: ${e.message}</p>`;
     }
   }
 
@@ -562,11 +591,8 @@
     const curso       = document.getElementById("cursoFormacao").value.trim();
     const status      = document.getElementById("statusFormacao").value.trim();
     if (!instituicao) { alert("Informe a instituição."); return; }
-    await fetch(`${API}/formacoes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instituicao, curso, status })
-    });
+    const res = await adminFetch(`${API}/formacoes`, "POST", { instituicao, curso, status });
+    if (!res.ok) { const e = await res.json(); alert("Erro: " + e.erro); return; }
     document.getElementById("nomeFormacao").value   = "";
     document.getElementById("cursoFormacao").value  = "";
     document.getElementById("statusFormacao").value = "";
@@ -575,7 +601,7 @@
 
   async function deletarFormacao(id) {
     if (!confirm("Deletar esta formação?")) return;
-    await fetch(`${API}/formacoes/${id}`, { method: "DELETE" });
+    await adminFetch(`${API}/formacoes/${id}`, "DELETE", {});
     mostrarTudo();
   }
 
@@ -598,11 +624,7 @@
     const instituicao = document.getElementById("editFormacaoInst").value.trim();
     const curso       = document.getElementById("editFormacaoCurso").value.trim();
     const status      = document.getElementById("editFormacaoStatus").value.trim();
-    await fetch(`${API}/formacoes/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ instituicao, curso, status })
-    });
+    await adminFetch(`${API}/formacoes/${id}`, "PUT", { instituicao, curso, status });
     cancelarEdicao("formacao");
     mostrarTudo();
   }
@@ -614,11 +636,8 @@
     const carga_horaria = parseInt(document.getElementById("horaCert").value) || 0;
     const ano           = parseInt(document.getElementById("anoCert").value)  || 2025;
     if (!nome) { alert("Informe o nome do certificado."); return; }
-    await fetch(`${API}/certificados`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome, instituicao, carga_horaria, ano })
-    });
+    const res = await adminFetch(`${API}/certificados`, "POST", { nome, instituicao, carga_horaria, ano });
+    if (!res.ok) { const e = await res.json(); alert("Erro: " + e.erro); return; }
     document.getElementById("nomeCert").value = "";
     document.getElementById("instCert").value = "";
     document.getElementById("horaCert").value = "";
@@ -628,14 +647,15 @@
 
   async function deletarCertificado(id) {
     if (!confirm("Remover este certificado?")) return;
-    await fetch(`${API}/certificados/${id}`, { method: "DELETE" });
+    await adminFetch(`${API}/certificados/${id}`, "DELETE", {});
     mostrarTudo();
   }
 
   let _certsCache = [];
   async function abrirEditarCert(id) {
     const res = await fetch(`${API}/certificados`);
-    _certsCache = await res.json();
+    const data = await res.json();
+    _certsCache = data.certificados ?? data;  // corrige: API retorna { total, certificados }
     const c = _certsCache.find(x => x.id === id);
     if (!c) return;
     document.getElementById("editCertId").value   = c.id;
@@ -653,11 +673,7 @@
     const instituicao   = document.getElementById("editCertInst").value.trim();
     const carga_horaria = parseInt(document.getElementById("editCertHora").value) || 0;
     const ano           = parseInt(document.getElementById("editCertAno").value)  || 2025;
-    await fetch(`${API}/certificados/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome, instituicao, carga_horaria, ano })
-    });
+    await adminFetch(`${API}/certificados/${id}`, "PUT", { nome, instituicao, carga_horaria, ano });
     cancelarEdicao("cert");
     mostrarTudo();
   }
@@ -684,19 +700,15 @@
         document.getElementById("editTecnicas").value   = (comp.tecnicas      || []).join(", ");
         document.getElementById("editSoftskills").value = (comp.interpessoais || []).join(", ");
       }
-    } catch {
-      grid.innerHTML = "<p style='color:#f88'>Erro ao conectar na API.</p>";
+    } catch (e) {
+      grid.innerHTML = `<p style='color:#f88'>Erro ao conectar na API: ${e.message}</p>`;
     }
   }
 
   async function salvarCompetencias() {
     const tecnicas      = document.getElementById("editTecnicas").value.split(",").map(t => t.trim()).filter(Boolean);
     const interpessoais = document.getElementById("editSoftskills").value.split(",").map(t => t.trim()).filter(Boolean);
-    await fetch(`${API}/competencias`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tecnicas, interpessoais })
-    });
+    await adminFetch(`${API}/competencias`, "PUT", { tecnicas, interpessoais });
     mostrarCompetencias();
     alert("Competências atualizadas!");
   }
@@ -751,6 +763,8 @@ function logoutAdmin() {
     } else if (tipo === "projeto") {
       document.getElementById("edit-projeto-section").style.display = "none";
       document.getElementById("editImagemProjeto").value = "";
+      document.getElementById("previewEditProjeto").src = "";
+      document.getElementById("previewEditProjeto").style.display = "none";
     }
   }
 

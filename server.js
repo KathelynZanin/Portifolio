@@ -38,6 +38,17 @@ async function getCompetencias() {
   };
 }
 
+// ── AUTH MIDDLEWARE ───────────────────────────────────────────────────────────
+// Protege rotas de escrita com header X-Admin-Token
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "1234";
+
+function requireAdmin(req, res, next) {
+  const token = req.headers['x-admin-token'] || req.body?._adminToken;
+  if (token !== ADMIN_TOKEN)
+    return res.status(401).json({ erro: 'Não autorizado. Token de admin inválido.' });
+  next();
+}
+
 // ── ROTAS ─────────────────────────────────────────────────────────────────────
 
 app.get('/', (req, res) => {
@@ -119,7 +130,7 @@ app.get('/projetos/:id', async (req, res) => {
   }
 });
 
-app.post('/projetos', async (req, res) => {
+app.post('/projetos',      requireAdmin, async (req, res) => {
   const dados = req.body;
   if (!dados?.nome?.trim()) return res.status(400).json({ erro: "O campo 'nome' é obrigatório." });
   try {
@@ -142,7 +153,7 @@ app.post('/projetos', async (req, res) => {
   }
 });
 
-app.put('/projetos/:id', async (req, res) => {
+app.put('/projetos/:id',    requireAdmin, async (req, res) => {
   const id    = parseInt(req.params.id);
   const dados = req.body;
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
@@ -174,10 +185,12 @@ app.put('/projetos/:id', async (req, res) => {
   }
 });
 
-app.delete('/projetos/:id', async (req, res) => {
+app.delete('/projetos/:id', requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id);
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
   try {
+    // Deleta tecnologias relacionadas antes (evita erro de FK se cascade não estiver no schema)
+    await prisma.projeto_tecnologias.deleteMany({ where: { projeto_id: id } });
     await prisma.projetos.delete({ where: { id } });
     res.status(200).json({ mensagem: `Projeto ${id} removido com sucesso.` });
   } catch (err) {
@@ -210,7 +223,7 @@ app.get('/formacoes/:id', async (req, res) => {
   }
 });
 
-app.post('/formacoes', async (req, res) => {
+app.post('/formacoes',      requireAdmin, async (req, res) => {
   const dados = req.body;
   if (!dados?.instituicao?.trim())
     return res.status(400).json({ erro: "O campo 'instituicao' é obrigatório." });
@@ -228,7 +241,7 @@ app.post('/formacoes', async (req, res) => {
   }
 });
 
-app.put('/formacoes/:id', async (req, res) => {
+app.put('/formacoes/:id',    requireAdmin, async (req, res) => {
   const id    = parseInt(req.params.id);
   const dados = req.body;
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
@@ -249,7 +262,7 @@ app.put('/formacoes/:id', async (req, res) => {
   }
 });
 
-app.delete('/formacoes/:id', async (req, res) => {
+app.delete('/formacoes/:id', requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id);
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
   try {
@@ -298,7 +311,7 @@ app.get('/certificados/:id', async (req, res) => {
   }
 });
 
-app.post('/certificados', async (req, res) => {
+app.post('/certificados',      requireAdmin, async (req, res) => {
   const dados = req.body;
   if (!dados?.nome?.trim()) return res.status(400).json({ erro: "O campo 'nome' é obrigatório." });
 
@@ -325,7 +338,7 @@ app.post('/certificados', async (req, res) => {
   }
 });
 
-app.put('/certificados/:id', async (req, res) => {
+app.put('/certificados/:id',    requireAdmin, async (req, res) => {
   const id    = parseInt(req.params.id);
   const dados = req.body;
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
@@ -354,7 +367,7 @@ app.put('/certificados/:id', async (req, res) => {
   }
 });
 
-app.delete('/certificados/:id', async (req, res) => {
+app.delete('/certificados/:id', requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id);
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
   try {
@@ -377,13 +390,15 @@ app.get('/competencias', async (req, res) => {
   }
 });
 
-app.post('/competencias', async (req, res) => {
+app.post('/competencias',           requireAdmin, async (req, res) => {
   const { tipo, nome } = req.body || {};
-  if (!tipo || !['tecnicas', 'interpessoais'].includes(tipo))
+  // aceita tanto o formato plural (frontend) quanto singular (direto)
+  const tiposValidos = ['tecnicas', 'interpessoais', 'tecnica', 'interpessoal'];
+  if (!tipo || !tiposValidos.includes(tipo))
     return res.status(400).json({ erro: "O campo 'tipo' deve ser 'tecnicas' ou 'interpessoais'." });
   if (!nome?.trim()) return res.status(400).json({ erro: "O campo 'nome' é obrigatório." });
 
-  const tipoDb = tipo === 'tecnicas' ? 'tecnica' : 'interpessoal';
+  const tipoDb = (tipo === 'tecnicas' || tipo === 'tecnica') ? 'tecnica' : 'interpessoal';
   try {
     await prisma.competencias.create({ data: { tipo: tipoDb, nome: nome.trim() } });
     res.status(201).json(await getCompetencias());
@@ -394,7 +409,7 @@ app.post('/competencias', async (req, res) => {
   }
 });
 
-app.put('/competencias', async (req, res) => {
+app.put('/competencias',            requireAdmin, async (req, res) => {
   const { tecnicas, interpessoais } = req.body || {};
   if (!tecnicas && !interpessoais)
     return res.status(400).json({ erro: "Envie 'tecnicas' e/ou 'interpessoais' para atualizar." });
@@ -424,7 +439,7 @@ app.put('/competencias', async (req, res) => {
   }
 });
 
-app.delete('/competencias/:tipo/:nome', async (req, res) => {
+app.delete('/competencias/:tipo/:nome', requireAdmin, async (req, res) => {
   const { tipo, nome } = req.params;
   if (!['tecnicas', 'interpessoais'].includes(tipo))
     return res.status(400).json({ erro: "Tipo deve ser 'tecnicas' ou 'interpessoais'." });

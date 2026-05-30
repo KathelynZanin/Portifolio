@@ -81,7 +81,9 @@ position:relative;
 transition:.3s;
 }
 
-.navbar a:hover
+.navbar a:hover {
+color: #ff1493;
+}
 
 .navbar a::after{
 content:"";
