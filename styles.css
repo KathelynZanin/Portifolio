@@ -154,7 +154,7 @@ transform:scale(1.08);
 background:linear-gradient(135deg,#4b0082,#ff1493);
 }
 
-/* SETA */
+
 
 .circle{
 width:60px;
@@ -181,7 +181,7 @@ border-top:20px solid #fff;
 50%{transform:translateY(10px);}
 }
 
-/* LINK BALLS LATERAIS */
+
 
 .link-balls{
 position:fixed;
@@ -220,7 +220,7 @@ background:#ff1493;
 transform:scale(1.15);
 }
 
-/* SOBRE MIM */
+
 
 .about-me-container{
 display:flex;
@@ -250,7 +250,7 @@ margin-bottom:20px;
 line-height:1.6;
 }
 
-/* HABILIDADES */
+
 
 .skill-balloons{
 flex:1;
@@ -271,7 +271,7 @@ transition:.3s;
 transform:scale(1.05);
 }
 
-/* FORMAÇÕES */
+
 
 .education-container{
 margin-top:60px;
@@ -304,7 +304,7 @@ transition:.3s;
 transform:translateY(-10px) scale(1.05);
 }
 
-/* PROJETOS */
+
 
 .projects-container{
 margin-top:80px;
@@ -337,7 +337,7 @@ transition:.3s;
 transform:translateY(-10px) scale(1.03);
 }
 
-/* CONTATO */
+
 
 .contact-container{
 text-align:center;
@@ -370,7 +370,7 @@ transition:.3s;
 transform:scale(1.1);
 }
 
-/* ADMIN */
+
 
 .admin-panel{
 background:#111;
@@ -419,7 +419,6 @@ background:#c71585;
 }
 
 
-/* RESPONSIVO */
 
 @media(max-width:700px){
 
@@ -443,8 +442,6 @@ left:10px;
 }
 
 
-/* LINKS GERAIS */
-
 a{
 color:#ff1493;
 text-decoration:none;
@@ -455,7 +452,7 @@ a:hover{
 color:#ffffff;
 }
 
-/* BOTÕES */
+
 
 .btn,
 button{
@@ -639,7 +636,7 @@ margin-bottom:20px;
       .hero-texto h2, .hero-texto p { text-align: center; }
     }
 
-    /* ── CERTIFICADOS ── */
+    
     .certificates-container {
       margin-top: 60px;
       padding: 40px;
@@ -707,7 +704,7 @@ margin-bottom:20px;
       border: 1px solid rgba(255,20,147,0.4);
     }
 
-    /* ── COMPETÊNCIAS ── */
+    
     .skills-container {
       margin-top: 60px;
       padding: 40px;
@@ -794,7 +791,7 @@ margin-bottom:20px;
       font-size: 0.9em;
     }
 
-    /* ── PROJETO CARD REFINADO ── */
+   
     .project {
       background: linear-gradient(145deg, #2a0040, #1a0030) !important;
       border: 1px solid rgba(255,20,147,0.35) !important;
@@ -822,7 +819,7 @@ margin-bottom:20px;
       color: #ddd;
       margin: 6px 0;
     }
-/* ── LINKEDIN BALL ── */
+
 .linkedin-ball {
   background: #0077b5;
 }

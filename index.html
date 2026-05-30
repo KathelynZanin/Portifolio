@@ -411,7 +411,7 @@
           </div>`;
       });
     } catch {
-      container.innerHTML = "<p style='color:#f88'>Erro ao conectar na API. Verifique se o Flask está rodando.</p>";
+      container.innerHTML = "<p style='color:#f88'>Erro ao conectar na API.</p>";
     }
   }
 
@@ -461,7 +461,8 @@
   let _projetosCache = [];
   async function abrirEditarProjeto(id) {
     const res = await fetch(`${API}/projetos`);
-    _projetosCache = await res.json();
+    const dataP = await res.json();
+    _projetosCache = dataP.projetos ?? dataP;
     const p = _projetosCache.find(x => x.id === id);
     if (!p) return;
 
@@ -661,7 +662,7 @@
     mostrarTudo();
   }
 
-  // ── COMPETÊNCIAS ──────────────────────────────────────────
+
   async function mostrarCompetencias() {
     const grid = document.getElementById("skills-grid");
     try {
@@ -760,7 +761,7 @@ function logoutAdmin() {
     mostrarTudo();
     mostrarCompetencias();
 
-    // Restaura estado admin se estava logado na mesma aba
+    
     if (sessionStorage.getItem("adminLogado") === "true") {
       modoAdmin = true;
       ativarPainelAdmin();
