@@ -516,7 +516,8 @@
     try {
       const [resF, resC] = await Promise.all([fetch(`${API}/formacoes`), fetch(`${API}/certificados`)]);
       const formacoes    = await resF.json();
-      const certificados = await resC.json();
+      const resDataC = await resC.json();
+      const certificados = resDataC.certificados ?? resDataC;
       container.innerHTML = "";
 
       formacoes.forEach(f => {
