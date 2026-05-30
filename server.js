@@ -1,133 +1,106 @@
 const express = require('express');
 const cors    = require('cors');
-const mysql   = require('mysql2/promise');
+const { PrismaClient } = require('@prisma/client');
 require('dotenv').config();
 
-const app = express();
+const app    = express();
+const prisma = new PrismaClient();
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(__dirname));
 
-// ONEXÃO COM O BANCO 
-const pool = mysql.createPool({
-  host:               process.env.DB_HOST || 'localhost',
-  user:               process.env.DB_USER || 'root',
-  password:           process.env.DB_PASS || 'fatec',
-  database:           process.env.DB_NAME || 'portifolio',
-  waitForConnections: true,
-  connectionLimit:    10
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+
+function validarId(id)          { return Number.isInteger(id) && id > 0; }
+function validarAno(ano)        { return Number.isInteger(ano) && ano >= 1900 && ano <= 2100; }
+function validarCargaHoraria(ch){ return Number.isInteger(ch) && ch >= 0; }
+
+async function projetoComTecnologias(id) {
+  const projeto = await prisma.projetos.findUnique({
+    where: { id },
+    include: { projeto_tecnologias: { select: { tecnologia: true } } }
+  });
+  if (!projeto) return null;
+  return {
+    ...projeto,
+    tecnologias: projeto.projeto_tecnologias.map(t => t.tecnologia),
+    projeto_tecnologias: undefined
+  };
+}
+
+async function getCompetencias() {
+  const rows = await prisma.competencias.findMany({ orderBy: [{ tipo: 'asc' }, { nome: 'asc' }] });
+  return {
+    tecnicas:      rows.filter(r => r.tipo === 'tecnica').map(r => r.nome),
+    interpessoais: rows.filter(r => r.tipo === 'interpessoal').map(r => r.nome)
+  };
+}
+
+// ── ROTAS ─────────────────────────────────────────────────────────────────────
+
+app.get('/', (req, res) => {
+  res.json({
+    mensagem: 'API do Portfólio da Kathelyn está funcionando!',
+    rotas_disponíveis: [
+      'GET    /projetos',
+      'GET    /projetos/:id',
+      'POST   /projetos',
+      'PUT    /projetos/:id',
+      'DELETE /projetos/:id',
+      'GET    /formacoes',
+      'GET    /formacoes/:id',
+      'POST   /formacoes',
+      'PUT    /formacoes/:id',
+      'DELETE /formacoes/:id',
+      'GET    /certificados',
+      'GET    /certificados/:id',
+      'POST   /certificados',
+      'PUT    /certificados/:id',
+      'DELETE /certificados/:id',
+      'GET    /competencias',
+      'POST   /competencias',
+      'PUT    /competencias',
+      'DELETE /competencias/:tipo/:nome'
+    ]
+  });
 });
 
-
-pool.getConnection()
-  .then(conn => {
-    console.log(' Conectado ao banco de dados MySQL!');
-    conn.release();
-  })
-  .catch(err => {
-    console.error(' Erro ao conectar no banco:', err.message);
-    process.exit(1);
-  });
-
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
 
 app.post('/login', async (req, res) => {
   const { usuario, senha } = req.body || {};
   if (!usuario || !senha)
-    return res.status(400).json({ erro: "Usuário e senha são obrigatórios." });
+    return res.status(400).json({ erro: 'Usuário e senha são obrigatórios.' });
   try {
-    const [[user]] = await pool.query(
-      'SELECT * FROM usuarios WHERE usuario = ? AND senha = ?', [usuario, senha]
-    );
-    if (!user)
-      return res.status(401).json({ erro: "Usuário ou senha incorretos." });
-    res.status(200).json({ mensagem: "Login realizado com sucesso!", usuario: user.usuario });
+    const user = await prisma.usuarios.findFirst({ where: { usuario, senha } });
+    if (!user) return res.status(401).json({ erro: 'Usuário ou senha incorretos.' });
+    res.status(200).json({ mensagem: 'Login realizado com sucesso!', usuario: user.usuario });
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
 });
 
-
-function validarId(id) {
-  return Number.isInteger(id) && id > 0;
-}
-
-function validarAno(ano) {
-  return Number.isInteger(ano) && ano >= 1900 && ano <= 2100;
-}
-
-function validarCargaHoraria(ch) {
-  return Number.isInteger(ch) && ch >= 0;
-}
-
-
-app.get('/', (req, res) => {
-  res.json({
-    mensagem: "API do Portfólio da Kathelyn está funcionando!",
-    rotas_disponíveis: [
-      "GET    /projetos",
-      "GET    /projetos/:id",
-      "POST   /projetos",
-      "PUT    /projetos/:id",
-      "DELETE /projetos/:id",
-      "GET    /formacoes",
-      "GET    /formacoes/:id",
-      "POST   /formacoes",
-      "PUT    /formacoes/:id",
-      "DELETE /formacoes/:id",
-      "GET    /certificados",
-      "GET    /certificados/:id",
-      "POST   /certificados",
-      "PUT    /certificados/:id",
-      "DELETE /certificados/:id",
-      "GET    /competencias",
-      "POST   /competencias",
-      "PUT    /competencias",
-      "DELETE /competencias/:tipo/:nome"
-    ]
-  });
-});
-
-async function projetoComTecnologias(conn, id) {
-  const [[projeto]] = await conn.query('SELECT * FROM projetos WHERE id = ?', [id]);
-  if (!projeto) return null;
-  const [tecRows] = await conn.query(
-    'SELECT tecnologia FROM projeto_tecnologias WHERE projeto_id = ?', [id]
-  );
-  projeto.tecnologias = tecRows.map(r => r.tecnologia);
-  return projeto;
-}
-
-
-async function getCompetencias(conn) {
-  const [rows] = await conn.query('SELECT tipo, nome FROM competencias ORDER BY tipo, nome');
-  const resultado = { tecnicas: [], interpessoais: [] };
-  for (const row of rows) {
-    if (row.tipo === 'tecnica')      resultado.tecnicas.push(row.nome);
-    if (row.tipo === 'interpessoal') resultado.interpessoais.push(row.nome);
-  }
-  return resultado;
-}
-
+// ── PROJETOS ──────────────────────────────────────────────────────────────────
 
 app.get('/projetos', async (req, res) => {
   try {
-  
     const page  = parseInt(req.query.page)  || null;
     const limit = parseInt(req.query.limit) || null;
 
-    let query = 'SELECT * FROM projetos ORDER BY id';
-    const params = [];
-
+    const options = { orderBy: { id: 'asc' } };
     if (page && limit) {
-      query += ' LIMIT ? OFFSET ?';
-      params.push(limit, (page - 1) * limit);
+      options.skip = (page - 1) * limit;
+      options.take = limit;
     }
 
-    const [rows] = await pool.query(query, params);
-    const projetos = await Promise.all(rows.map(p => projetoComTecnologias(pool, p.id)));
+    const [rows, total] = await Promise.all([
+      prisma.projetos.findMany(options),
+      prisma.projetos.count()
+    ]);
 
-    const [[{ total }]] = await pool.query('SELECT COUNT(*) AS total FROM projetos');
+    const projetos = await Promise.all(rows.map(p => projetoComTecnologias(p.id)));
     res.status(200).json({ total, projetos });
   } catch (err) {
     res.status(500).json({ erro: err.message });
@@ -138,7 +111,7 @@ app.get('/projetos/:id', async (req, res) => {
   const id = parseInt(req.params.id);
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
   try {
-    const projeto = await projetoComTecnologias(pool, id);
+    const projeto = await projetoComTecnologias(id);
     if (!projeto) return res.status(404).json({ erro: `Projeto com id ${id} não encontrado.` });
     res.status(200).json(projeto);
   } catch (err) {
@@ -149,30 +122,23 @@ app.get('/projetos/:id', async (req, res) => {
 app.post('/projetos', async (req, res) => {
   const dados = req.body;
   if (!dados?.nome?.trim()) return res.status(400).json({ erro: "O campo 'nome' é obrigatório." });
-
-  const conn = await pool.getConnection();
   try {
-    await conn.beginTransaction();
-    const [result] = await conn.query(
-      'INSERT INTO projetos (nome, descricao, imagem, github, site) VALUES (?, ?, ?, ?, ?)',
-      [dados.nome.trim(), dados.descricao || '', dados.imagem || '', dados.github || '', dados.site || '']
-    );
-    const novoId = result.insertId;
     const tecnologias = Array.isArray(dados.tecnologias) ? dados.tecnologias : [];
-    for (const tec of tecnologias) {
-      await conn.query(
-        'INSERT INTO projeto_tecnologias (projeto_id, tecnologia) VALUES (?, ?)',
-        [novoId, tec]
-      );
-    }
-    await conn.commit();
-    const novo = await projetoComTecnologias(conn, novoId);
-    res.status(201).json(novo);
+    const novo = await prisma.projetos.create({
+      data: {
+        nome:      dados.nome.trim(),
+        descricao: dados.descricao || '',
+        imagem:    dados.imagem    || '',
+        github:    dados.github    || '',
+        site:      dados.site      || '',
+        projeto_tecnologias: {
+          create: tecnologias.map(t => ({ tecnologia: t }))
+        }
+      }
+    });
+    res.status(201).json(await projetoComTecnologias(novo.id));
   } catch (err) {
-    await conn.rollback();
     res.status(500).json({ erro: err.message });
-  } finally {
-    conn.release();
   }
 });
 
@@ -180,43 +146,31 @@ app.put('/projetos/:id', async (req, res) => {
   const id    = parseInt(req.params.id);
   const dados = req.body;
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
-
-  const conn = await pool.getConnection();
   try {
-    await conn.beginTransaction();
-    const [[atual]] = await conn.query('SELECT * FROM projetos WHERE id = ?', [id]);
-    if (!atual) {
-      await conn.rollback();
-      return res.status(404).json({ erro: `Projeto com id ${id} não encontrado.` });
-    }
-    await conn.query(
-      'UPDATE projetos SET nome=?, descricao=?, imagem=?, github=?, site=? WHERE id=?',
-      [
-        dados.nome?.trim()  ?? atual.nome,
-        dados.descricao     ?? atual.descricao,
-        dados.imagem        ?? atual.imagem,
-        dados.github        ?? atual.github,
-        dados.site          ?? atual.site,
-        id
-      ]
-    );
-    if (Array.isArray(dados.tecnologias)) {
-      await conn.query('DELETE FROM projeto_tecnologias WHERE projeto_id = ?', [id]);
-      for (const tec of dados.tecnologias) {
-        await conn.query(
-          'INSERT INTO projeto_tecnologias (projeto_id, tecnologia) VALUES (?, ?)',
-          [id, tec]
-        );
+    const atual = await prisma.projetos.findUnique({ where: { id } });
+    if (!atual) return res.status(404).json({ erro: `Projeto com id ${id} não encontrado.` });
+
+    await prisma.projetos.update({
+      where: { id },
+      data: {
+        nome:      dados.nome?.trim()  ?? atual.nome,
+        descricao: dados.descricao     ?? atual.descricao,
+        imagem:    dados.imagem        ?? atual.imagem,
+        github:    dados.github        ?? atual.github,
+        site:      dados.site          ?? atual.site
       }
+    });
+
+    if (Array.isArray(dados.tecnologias)) {
+      await prisma.projeto_tecnologias.deleteMany({ where: { projeto_id: id } });
+      await prisma.projeto_tecnologias.createMany({
+        data: dados.tecnologias.map(t => ({ projeto_id: id, tecnologia: t }))
+      });
     }
-    await conn.commit();
-    const atualizado = await projetoComTecnologias(conn, id);
-    res.status(200).json(atualizado);
+
+    res.status(200).json(await projetoComTecnologias(id));
   } catch (err) {
-    await conn.rollback();
     res.status(500).json({ erro: err.message });
-  } finally {
-    conn.release();
   }
 });
 
@@ -224,19 +178,20 @@ app.delete('/projetos/:id', async (req, res) => {
   const id = parseInt(req.params.id);
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
   try {
-    const [result] = await pool.query('DELETE FROM projetos WHERE id = ?', [id]);
-    if (result.affectedRows === 0)
-      return res.status(404).json({ erro: `Projeto com id ${id} não encontrado.` });
+    await prisma.projetos.delete({ where: { id } });
     res.status(200).json({ mensagem: `Projeto ${id} removido com sucesso.` });
   } catch (err) {
+    if (err.code === 'P2025')
+      return res.status(404).json({ erro: `Projeto com id ${id} não encontrado.` });
     res.status(500).json({ erro: err.message });
   }
 });
 
+// ── FORMAÇÕES ─────────────────────────────────────────────────────────────────
 
 app.get('/formacoes', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM formacoes ORDER BY id');
+    const rows = await prisma.formacoes.findMany({ orderBy: { id: 'asc' } });
     res.status(200).json(rows);
   } catch (err) {
     res.status(500).json({ erro: err.message });
@@ -247,7 +202,7 @@ app.get('/formacoes/:id', async (req, res) => {
   const id = parseInt(req.params.id);
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
   try {
-    const [[formacao]] = await pool.query('SELECT * FROM formacoes WHERE id = ?', [id]);
+    const formacao = await prisma.formacoes.findUnique({ where: { id } });
     if (!formacao) return res.status(404).json({ erro: `Formação com id ${id} não encontrada.` });
     res.status(200).json(formacao);
   } catch (err) {
@@ -260,11 +215,13 @@ app.post('/formacoes', async (req, res) => {
   if (!dados?.instituicao?.trim())
     return res.status(400).json({ erro: "O campo 'instituicao' é obrigatório." });
   try {
-    const [result] = await pool.query(
-      'INSERT INTO formacoes (instituicao, curso, status) VALUES (?, ?, ?)',
-      [dados.instituicao.trim(), dados.curso || '', dados.status || '']
-    );
-    const [[nova]] = await pool.query('SELECT * FROM formacoes WHERE id = ?', [result.insertId]);
+    const nova = await prisma.formacoes.create({
+      data: {
+        instituicao: dados.instituicao.trim(),
+        curso:       dados.curso   || '',
+        status:      dados.status  || ''
+      }
+    });
     res.status(201).json(nova);
   } catch (err) {
     res.status(500).json({ erro: err.message });
@@ -276,13 +233,16 @@ app.put('/formacoes/:id', async (req, res) => {
   const dados = req.body;
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
   try {
-    const [[atual]] = await pool.query('SELECT * FROM formacoes WHERE id = ?', [id]);
+    const atual = await prisma.formacoes.findUnique({ where: { id } });
     if (!atual) return res.status(404).json({ erro: `Formação com id ${id} não encontrada.` });
-    await pool.query(
-      'UPDATE formacoes SET instituicao=?, curso=?, status=? WHERE id=?',
-      [dados.instituicao ?? atual.instituicao, dados.curso ?? atual.curso, dados.status ?? atual.status, id]
-    );
-    const [[atualizada]] = await pool.query('SELECT * FROM formacoes WHERE id = ?', [id]);
+    const atualizada = await prisma.formacoes.update({
+      where: { id },
+      data: {
+        instituicao: dados.instituicao ?? atual.instituicao,
+        curso:       dados.curso       ?? atual.curso,
+        status:      dados.status      ?? atual.status
+      }
+    });
     res.status(200).json(atualizada);
   } catch (err) {
     res.status(500).json({ erro: err.message });
@@ -293,32 +253,33 @@ app.delete('/formacoes/:id', async (req, res) => {
   const id = parseInt(req.params.id);
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
   try {
-    const [result] = await pool.query('DELETE FROM formacoes WHERE id = ?', [id]);
-    if (result.affectedRows === 0)
-      return res.status(404).json({ erro: `Formação com id ${id} não encontrada.` });
+    await prisma.formacoes.delete({ where: { id } });
     res.status(200).json({ mensagem: `Formação ${id} removida com sucesso.` });
   } catch (err) {
+    if (err.code === 'P2025')
+      return res.status(404).json({ erro: `Formação com id ${id} não encontrada.` });
     res.status(500).json({ erro: err.message });
   }
 });
 
+// ── CERTIFICADOS ──────────────────────────────────────────────────────────────
 
 app.get('/certificados', async (req, res) => {
   try {
-
     const page  = parseInt(req.query.page)  || null;
     const limit = parseInt(req.query.limit) || null;
 
-    let query = 'SELECT * FROM certificados ORDER BY id';
-    const params = [];
-
+    const options = { orderBy: { id: 'asc' } };
     if (page && limit) {
-      query += ' LIMIT ? OFFSET ?';
-      params.push(limit, (page - 1) * limit);
+      options.skip = (page - 1) * limit;
+      options.take = limit;
     }
 
-    const [rows] = await pool.query(query, params);
-    const [[{ total }]] = await pool.query('SELECT COUNT(*) AS total FROM certificados');
+    const [rows, total] = await Promise.all([
+      prisma.certificados.findMany(options),
+      prisma.certificados.count()
+    ]);
+
     res.status(200).json({ total, certificados: rows });
   } catch (err) {
     res.status(500).json({ erro: err.message });
@@ -329,7 +290,7 @@ app.get('/certificados/:id', async (req, res) => {
   const id = parseInt(req.params.id);
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
   try {
-    const [[cert]] = await pool.query('SELECT * FROM certificados WHERE id = ?', [id]);
+    const cert = await prisma.certificados.findUnique({ where: { id } });
     if (!cert) return res.status(404).json({ erro: `Certificado com id ${id} não encontrado.` });
     res.status(200).json(cert);
   } catch (err) {
@@ -345,16 +306,19 @@ app.post('/certificados', async (req, res) => {
   const ano          = dados.ano ?? 2025;
 
   if (!validarCargaHoraria(cargaHoraria))
-    return res.status(400).json({ erro: "Carga horária deve ser um número inteiro positivo." });
+    return res.status(400).json({ erro: 'Carga horária deve ser um número inteiro positivo.' });
   if (!validarAno(ano))
-    return res.status(400).json({ erro: "Ano inválido. Deve ser entre 1900 e 2100." });
+    return res.status(400).json({ erro: 'Ano inválido. Deve ser entre 1900 e 2100.' });
 
   try {
-    const [result] = await pool.query(
-      'INSERT INTO certificados (nome, carga_horaria, ano, instituicao) VALUES (?, ?, ?, ?)',
-      [dados.nome.trim(), cargaHoraria, ano, dados.instituicao || '']
-    );
-    const [[novo]] = await pool.query('SELECT * FROM certificados WHERE id = ?', [result.insertId]);
+    const novo = await prisma.certificados.create({
+      data: {
+        nome:          dados.nome.trim(),
+        carga_horaria: cargaHoraria,
+        ano,
+        instituicao:   dados.instituicao || ''
+      }
+    });
     res.status(201).json(novo);
   } catch (err) {
     res.status(500).json({ erro: err.message });
@@ -367,19 +331,23 @@ app.put('/certificados/:id', async (req, res) => {
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
 
   if (dados.carga_horaria !== undefined && !validarCargaHoraria(dados.carga_horaria))
-    return res.status(400).json({ erro: "Carga horária deve ser um número inteiro positivo." });
+    return res.status(400).json({ erro: 'Carga horária deve ser um número inteiro positivo.' });
   if (dados.ano !== undefined && !validarAno(dados.ano))
-    return res.status(400).json({ erro: "Ano inválido. Deve ser entre 1900 e 2100." });
+    return res.status(400).json({ erro: 'Ano inválido. Deve ser entre 1900 e 2100.' });
 
   try {
-    const [[atual]] = await pool.query('SELECT * FROM certificados WHERE id = ?', [id]);
+    const atual = await prisma.certificados.findUnique({ where: { id } });
     if (!atual) return res.status(404).json({ erro: `Certificado com id ${id} não encontrado.` });
-    await pool.query(
-      'UPDATE certificados SET nome=?, carga_horaria=?, ano=?, instituicao=? WHERE id=?',
-      [dados.nome ?? atual.nome, dados.carga_horaria ?? atual.carga_horaria,
-       dados.ano  ?? atual.ano,  dados.instituicao   ?? atual.instituicao, id]
-    );
-    const [[atualizado]] = await pool.query('SELECT * FROM certificados WHERE id = ?', [id]);
+
+    const atualizado = await prisma.certificados.update({
+      where: { id },
+      data: {
+        nome:          dados.nome          ?? atual.nome,
+        carga_horaria: dados.carga_horaria ?? atual.carga_horaria,
+        ano:           dados.ano           ?? atual.ano,
+        instituicao:   dados.instituicao   ?? atual.instituicao
+      }
+    });
     res.status(200).json(atualizado);
   } catch (err) {
     res.status(500).json({ erro: err.message });
@@ -390,19 +358,20 @@ app.delete('/certificados/:id', async (req, res) => {
   const id = parseInt(req.params.id);
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
   try {
-    const [result] = await pool.query('DELETE FROM certificados WHERE id = ?', [id]);
-    if (result.affectedRows === 0)
-      return res.status(404).json({ erro: `Certificado com id ${id} não encontrado.` });
+    await prisma.certificados.delete({ where: { id } });
     res.status(200).json({ mensagem: `Certificado ${id} removido com sucesso.` });
   } catch (err) {
+    if (err.code === 'P2025')
+      return res.status(404).json({ erro: `Certificado com id ${id} não encontrado.` });
     res.status(500).json({ erro: err.message });
   }
 });
 
+// ── COMPETÊNCIAS ──────────────────────────────────────────────────────────────
 
 app.get('/competencias', async (req, res) => {
   try {
-    res.status(200).json(await getCompetencias(pool));
+    res.status(200).json(await getCompetencias());
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
@@ -416,10 +385,10 @@ app.post('/competencias', async (req, res) => {
 
   const tipoDb = tipo === 'tecnicas' ? 'tecnica' : 'interpessoal';
   try {
-    await pool.query('INSERT INTO competencias (tipo, nome) VALUES (?, ?)', [tipoDb, nome.trim()]);
-    res.status(201).json(await getCompetencias(pool));
+    await prisma.competencias.create({ data: { tipo: tipoDb, nome: nome.trim() } });
+    res.status(201).json(await getCompetencias());
   } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY')
+    if (err.code === 'P2002')
       return res.status(409).json({ erro: `'${nome}' já existe em ${tipo}.` });
     res.status(500).json({ erro: err.message });
   }
@@ -429,31 +398,29 @@ app.put('/competencias', async (req, res) => {
   const { tecnicas, interpessoais } = req.body || {};
   if (!tecnicas && !interpessoais)
     return res.status(400).json({ erro: "Envie 'tecnicas' e/ou 'interpessoais' para atualizar." });
-  if (tecnicas && !Array.isArray(tecnicas))
+  if (tecnicas      && !Array.isArray(tecnicas))
     return res.status(400).json({ erro: "'tecnicas' deve ser um array." });
   if (interpessoais && !Array.isArray(interpessoais))
     return res.status(400).json({ erro: "'interpessoais' deve ser um array." });
 
-  const conn = await pool.getConnection();
   try {
-    await conn.beginTransaction();
-    if (tecnicas) {
-      await conn.query("DELETE FROM competencias WHERE tipo = 'tecnica'");
-      for (const nome of tecnicas)
-        await conn.query("INSERT INTO competencias (tipo, nome) VALUES ('tecnica', ?)", [nome]);
-    }
-    if (interpessoais) {
-      await conn.query("DELETE FROM competencias WHERE tipo = 'interpessoal'");
-      for (const nome of interpessoais)
-        await conn.query("INSERT INTO competencias (tipo, nome) VALUES ('interpessoal', ?)", [nome]);
-    }
-    await conn.commit();
-    res.status(200).json(await getCompetencias(conn));
+    await prisma.$transaction(async (tx) => {
+      if (tecnicas) {
+        await tx.competencias.deleteMany({ where: { tipo: 'tecnica' } });
+        await tx.competencias.createMany({
+          data: tecnicas.map(n => ({ tipo: 'tecnica', nome: n }))
+        });
+      }
+      if (interpessoais) {
+        await tx.competencias.deleteMany({ where: { tipo: 'interpessoal' } });
+        await tx.competencias.createMany({
+          data: interpessoais.map(n => ({ tipo: 'interpessoal', nome: n }))
+        });
+      }
+    });
+    res.status(200).json(await getCompetencias());
   } catch (err) {
-    await conn.rollback();
     res.status(500).json({ erro: err.message });
-  } finally {
-    conn.release();
   }
 });
 
@@ -464,19 +431,16 @@ app.delete('/competencias/:tipo/:nome', async (req, res) => {
 
   const tipoDb = tipo === 'tecnicas' ? 'tecnica' : 'interpessoal';
   try {
-    const [result] = await pool.query(
-      'DELETE FROM competencias WHERE tipo = ? AND nome = ?', [tipoDb, nome]
-    );
-    if (result.affectedRows === 0)
-      return res.status(404).json({ erro: `'${nome}' não encontrado em ${tipo}.` });
-    res.status(200).json(await getCompetencias(pool));
+    await prisma.competencias.deleteMany({ where: { tipo: tipoDb, nome } });
+    res.status(200).json(await getCompetencias());
   } catch (err) {
     res.status(500).json({ erro: err.message });
   }
 });
 
+// ── START ─────────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(` Servidor rodando em http://localhost:${PORT}`);
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
