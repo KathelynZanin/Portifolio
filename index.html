@@ -381,7 +381,8 @@
     const container = document.getElementById("lista-projetos");
     try {
       const res = await fetch(`${API}/projetos`);
-      const projetos = await res.json();
+     const data = await res.json();
+     const projetos = data.projetos ?? data;
       container.innerHTML = "";
       if (projetos.length === 0) {
         container.innerHTML = "<p style='color:#aaa'>Nenhum projeto ainda.</p>";
