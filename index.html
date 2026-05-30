@@ -124,7 +124,7 @@
 </div>
 
 
-<button onclick="loginAdmin()" style="position:fixed;bottom:20px;right:20px;z-index:200;">
+<button id="btn-admin" onclick="loginAdmin()" style="position:fixed;bottom:20px;right:20px;z-index:200;">
   Admin
 </button>
 
@@ -700,10 +700,22 @@
 
 
   function loginAdmin() {
-  const senha = prompt("Digite a senha de administrador:");
-  if (senha === "1234") {
+    const senha = prompt("Digite a senha de administrador:");
+    if (senha === null) return;
+    if (senha !== "1234") {
+      alert("Senha incorreta.");
+      return;
+    }
     modoAdmin = true;
+    sessionStorage.setItem("adminLogado", "true");
+    ativarPainelAdmin();
+    alert("Modo administrador ativado!");
+  }
+
+  function ativarPainelAdmin() {
     document.getElementById("admin-area").style.display = "block";
+    document.getElementById("btn-admin").textContent = "Sair";
+    document.getElementById("btn-admin").onclick = logoutAdmin;
     const adminLink = document.getElementById("admin-link");
     if (adminLink) adminLink.style.display = "inline-block";
     document.getElementById("editNome").value      = portfolio.nome;
@@ -713,10 +725,19 @@
     mostrarProjetos();
     mostrarTudo();
     mostrarCompetencias();
-    alert("Modo administrador ativado!");
-  } else {
-    alert("Senha incorreta.");
   }
+
+function logoutAdmin() {
+  modoAdmin = false;
+  sessionStorage.removeItem("adminLogado");
+  document.getElementById("admin-area").style.display = "none";
+  document.getElementById("btn-admin").textContent = "Admin";
+  document.getElementById("btn-admin").onclick = loginAdmin;
+  const adminLink = document.getElementById("admin-link");
+  if (adminLink) adminLink.style.display = "none";
+  mostrarProjetos();
+  mostrarTudo();
+  alert("Modo administrador desativado!");
 }
 
   function cancelarEdicao(tipo) {
@@ -736,6 +757,12 @@
     mostrarProjetos();
     mostrarTudo();
     mostrarCompetencias();
+
+    // Restaura estado admin se estava logado na mesma aba
+    if (sessionStorage.getItem("adminLogado") === "true") {
+      modoAdmin = true;
+      ativarPainelAdmin();
+    }
   });
 </script>
 </body>
