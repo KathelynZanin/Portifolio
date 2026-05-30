@@ -699,26 +699,35 @@
   }
 
 
-  function loginAdmin() {
-    const senha = prompt("Digite a senha de administrador:");
-    if (senha === "1234") {
-      modoAdmin = true;
-      document.getElementById("admin-area").style.display = "block";
-      const adminLink = document.getElementById("admin-link");
-      if (adminLink) adminLink.style.display = "inline-block";
-      // preencher campos
-      document.getElementById("editNome").value      = portfolio.nome;
-      document.getElementById("editTitulo").value    = portfolio.titulo;
-      document.getElementById("editDescricao").value = portfolio.descricao;
-      document.getElementById("editSobre").value     = portfolio.sobre;
-      mostrarProjetos();
-      mostrarTudo();
-      mostrarCompetencias();
-      alert("Modo administrador ativado!");
-    } else {
-      alert("Senha incorreta.");
-    }
+  async function loginAdmin() {
+  const usuario = prompt("Usuário:");
+  const senha   = prompt("Senha:");
+
+  const res = await fetch(`${API}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ usuario, senha })
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    modoAdmin = true;
+    document.getElementById("admin-area").style.display = "block";
+    const adminLink = document.getElementById("admin-link");
+    if (adminLink) adminLink.style.display = "inline-block";
+    document.getElementById("editNome").value      = portfolio.nome;
+    document.getElementById("editTitulo").value    = portfolio.titulo;
+    document.getElementById("editDescricao").value = portfolio.descricao;
+    document.getElementById("editSobre").value     = portfolio.sobre;
+    mostrarProjetos();
+    mostrarTudo();
+    mostrarCompetencias();
+    alert("Modo administrador ativado!");
+  } else {
+    alert(data.erro);
   }
+}
 
   function cancelarEdicao(tipo) {
     if (tipo === "formacao") {

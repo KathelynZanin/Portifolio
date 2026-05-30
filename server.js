@@ -9,13 +9,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(__dirname));
 
-// CONEXÃO COM O BANCO
+// ONEXÃO COM O BANCO 
 const pool = mysql.createPool({
   host:               process.env.DB_HOST || 'localhost',
   user:               process.env.DB_USER || 'root',
   password:           process.env.DB_PASS || 'fatec',
   database:           process.env.DB_NAME || 'portifolio',
-  port:               process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit:    10
 });
@@ -23,13 +22,30 @@ const pool = mysql.createPool({
 
 pool.getConnection()
   .then(conn => {
-    console.log('Conectado ao banco de dados MySQL!');
+    console.log(' Conectado ao banco de dados MySQL!');
     conn.release();
   })
   .catch(err => {
-    console.error('Erro ao conectar no banco:', err.message);
+    console.error(' Erro ao conectar no banco:', err.message);
     process.exit(1);
   });
+
+
+app.post('/login', async (req, res) => {
+  const { usuario, senha } = req.body || {};
+  if (!usuario || !senha)
+    return res.status(400).json({ erro: "Usuário e senha são obrigatórios." });
+  try {
+    const [[user]] = await pool.query(
+      'SELECT * FROM usuarios WHERE usuario = ? AND senha = ?', [usuario, senha]
+    );
+    if (!user)
+      return res.status(401).json({ erro: "Usuário ou senha incorretos." });
+    res.status(200).json({ mensagem: "Login realizado com sucesso!", usuario: user.usuario });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
 
 
 function validarId(id) {
@@ -71,7 +87,6 @@ app.get('/', (req, res) => {
     ]
   });
 });
-
 
 async function projetoComTecnologias(conn, id) {
   const [[projeto]] = await conn.query('SELECT * FROM projetos WHERE id = ?', [id]);
@@ -290,7 +305,7 @@ app.delete('/formacoes/:id', async (req, res) => {
 
 app.get('/certificados', async (req, res) => {
   try {
-   
+
     const page  = parseInt(req.query.page)  || null;
     const limit = parseInt(req.query.limit) || null;
 
@@ -463,5 +478,5 @@ app.delete('/competencias/:tipo/:nome', async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+  console.log(` Servidor rodando em http://localhost:${PORT}`);
 });
