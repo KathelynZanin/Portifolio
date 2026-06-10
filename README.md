@@ -23,7 +23,7 @@ DB_PASS=sua_senha
 DB_NAME=railway
 DB_PORT=39254
 
-DATABASE_URL="mysql://root:sua_senha@host:porta/railway"
+DATABASE_URL="mysql://root:xOzGnKcidVrGEgGCIpdAgyPGiAVFMXhp@66.33.22.227:39254/railway"
 
 ADMIN_TOKEN="1234"
 ```
