@@ -168,7 +168,7 @@
       </label>
       <span id="statusCurriculo" style="color:#aaa;font-size:0.85em;"></span>
     </div>
-  
+    <p style="color:#aaa;font-size:0.8em;margin:4px 0 0">O botão "Baixar Currículo" aparecerá automaticamente para os visitantes após o upload.</p>
   </div>
 
 
@@ -362,20 +362,13 @@
     }
   }
 
- function abrirCurriculo(e) {
-  e.preventDefault();
-  const btn = document.getElementById("btnDownloadCV");
-  const url = btn ? btn.href : null;
-  if (!url || url === "#" || url === window.location.href + "#") return;
-  
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "Curriculo-Kathelyn-Zanin.pdf";
-  link.target = "_blank";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
+  function abrirCurriculo(e) {
+    e.preventDefault();
+    const btn = document.getElementById("btnDownloadCV");
+    const url = btn ? btn.href : null;
+    if (!url || url === "#" || url === window.location.href + "#") return;
+    window.open(url, "_blank");
+  }
 
   async function uploadCurriculoPDF(input) {
     const file = input.files[0];
@@ -383,19 +376,17 @@
     const statusEl = document.getElementById("statusCurriculo");
     statusEl.textContent = "Enviando PDF...";
     const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "portfolio_upload");
-    formData.append("resource_type", "raw");
+    formData.append("pdf", file);
     try {
-      const res = await fetch("https://api.cloudinary.com/v1_1/djbuniysj/raw/upload", {
+      const res = await fetch(`${API}/curriculo/upload`, {
         method: "POST",
+        headers: { "X-Admin-Token": "1234" },
         body: formData
       });
       if (!res.ok) { statusEl.textContent = "Erro no upload."; return; }
       const data = await res.json();
-      
-      const saveRes = await adminFetch(`${API}/curriculo`, "PUT", { url: data.secure_url });
-      if (!saveRes.ok) { statusEl.textContent = "Erro ao salvar URL no servidor."; return; }
+      const saveRes = await adminFetch(`${API}/curriculo`, "PUT", { url: data.url });
+      if (!saveRes.ok) { statusEl.textContent = "Erro ao salvar URL."; return; }
       await carregarBotaoCurriculo();
       statusEl.textContent = "✅ PDF enviado com sucesso!";
     } catch (e) {
@@ -616,28 +607,24 @@
     const dataP = await res.json();
     _projetosCache = dataP.projetos ?? dataP;
     const p = _projetosCache.find(x => x.id === id);
-    if (!p) { alert("Projeto não encontrado."); return; }
+    if (!p) return;
 
     document.getElementById("editProjetoId").value      = p.id;
-    document.getElementById("editProjetoNome").value    = p.nome      || "";
-    document.getElementById("editProjetoDesc").value    = p.descricao || "";
+    document.getElementById("editProjetoNome").value    = p.nome;
+    document.getElementById("editProjetoDesc").value    = p.descricao;
     document.getElementById("editProjetoTecs").value    = (p.tecnologias || []).join(", ");
-    document.getElementById("editProjetoGithub").value  = p.github    || "";
-    document.getElementById("editProjetoSite").value    = p.site      || "";
-    document.getElementById("editProjetoEmpresa").value = p.empresa   || "";
+    document.getElementById("editProjetoGithub").value    = p.github    || "";
+    document.getElementById("editProjetoSite").value      = p.site      || "";
+    document.getElementById("editProjetoEmpresa").value   = p.empresa   || "";
     document.getElementById("editProjetoProfessor").value = p.professor || "";
-
-   
-    document.getElementById("editImagemProjeto").value = "";
+    document.getElementById("editImagemProjeto").value  = p.imagem || "";
 
     const prev = document.getElementById("previewEditProjeto");
     if (p.imagem) { prev.src = p.imagem; prev.style.display = "block"; }
     else          { prev.src = ""; prev.style.display = "none"; }
 
-    const section = document.getElementById("edit-projeto-section");
-    section.style.display = "flex";
-    section.style.flexDirection = "column";
-    setTimeout(() => section.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    document.getElementById("edit-projeto-section").style.display = "flex";
+    document.getElementById("edit-projeto-section").scrollIntoView({ behavior: "smooth" });
   }
 
   async function salvarProjeto() {
@@ -784,7 +771,7 @@
   async function abrirEditarCert(id) {
     const res = await fetch(`${API}/certificados`);
     const data = await res.json();
-    _certsCache = data.certificados ?? data;  
+    _certsCache = data.certificados ?? data;  // corrige: API retorna { total, certificados }
     const c = _certsCache.find(x => x.id === id);
     if (!c) return;
     document.getElementById("editCertId").value   = c.id;
