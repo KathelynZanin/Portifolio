@@ -721,7 +721,7 @@
 
       certificados.forEach(c => {
         const btnVer = c.imagem
-          ? `<span onclick="abrirModalCert('${c.imagem}')" class="cert-badge" style="cursor:pointer;background:rgba(255,20,147,0.35);border-color:rgba(255,20,147,0.7);color:#fff;margin-left:6px;">🖼 Ver Certificado</span>`
+          ? `<span onclick="abrirModalCert('${c.imagem}')" class="cert-badge" style="cursor:pointer;background:rgba(255,20,147,0.35);border-color:rgba(255,20,147,0.7);color:#fff;margin-left:6px;"> Ver Certificado</span>`
           : "";
         container.innerHTML += `
           <div class="cert-card" style="${c.imagem ? 'cursor:default' : ''}">
