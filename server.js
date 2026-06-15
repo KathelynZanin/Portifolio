@@ -53,7 +53,7 @@ async function getCompetencias() {
 }
 
 // ── AUTH MIDDLEWARE ───────────────────────────────────────────────────────────
-// Protege rotas de escrita com header X-Admin-Token
+
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "1234";
 
 function requireAdmin(req, res, next) {
@@ -207,7 +207,7 @@ app.delete('/projetos/:id', requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id);
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
   try {
-    // Deleta tecnologias relacionadas antes (evita erro de FK se cascade não estiver no schema)
+   
     await prisma.projeto_tecnologias.deleteMany({ where: { projeto_id: id } });
     await prisma.projetos.delete({ where: { id } });
     res.status(200).json({ mensagem: `Projeto ${id} removido com sucesso.` });
@@ -347,7 +347,8 @@ app.post('/certificados',      requireAdmin, async (req, res) => {
         nome:          dados.nome.trim(),
         carga_horaria: cargaHoraria,
         ano,
-        instituicao:   dados.instituicao || ''
+        instituicao:   dados.instituicao || '',
+        imagem:        dados.imagem       || ''
       }
     });
     res.status(201).json(novo);
@@ -376,7 +377,8 @@ app.put('/certificados/:id',    requireAdmin, async (req, res) => {
         nome:          dados.nome          ?? atual.nome,
         carga_horaria: dados.carga_horaria ?? atual.carga_horaria,
         ano:           dados.ano           ?? atual.ano,
-        instituicao:   dados.instituicao   ?? atual.instituicao
+        instituicao:   dados.instituicao   ?? atual.instituicao,
+        imagem:        dados.imagem        ?? atual.imagem ?? ''
       }
     });
     res.status(200).json(atualizado);
@@ -410,7 +412,7 @@ app.get('/competencias', async (req, res) => {
 
 app.post('/competencias',           requireAdmin, async (req, res) => {
   const { tipo, nome } = req.body || {};
-  // aceita tanto o formato plural (frontend) quanto singular (direto)
+
   const tiposValidos = ['tecnicas', 'interpessoais', 'tecnica', 'interpessoal'];
   if (!tipo || !tiposValidos.includes(tipo))
     return res.status(400).json({ erro: "O campo 'tipo' deve ser 'tecnicas' ou 'interpessoais'." });

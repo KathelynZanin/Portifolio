@@ -8,11 +8,12 @@ datasource db {
 }
 
 model certificados {
-  id            Int     @id @default(autoincrement())
-  nome          String  @db.VarChar(200)
-  carga_horaria Int?    @default(0)
-  ano           Int?    @default(2025) @db.Year
-  instituicao   String? @default("") @db.VarChar(150)
+  id            Int    @id @default(autoincrement())
+  nome          String
+  instituicao   String @default("")
+  carga_horaria Int    @default(0)
+  ano           Int    @default(2025)
+  imagem        String @default("")  
 }
 
 model competencias {

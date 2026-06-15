@@ -121,7 +121,7 @@
       <i class="fab fa-linkedin"></i> LinkedIn
     </a>
     <a id="btnDownloadCV" class="button" href="#" style="visibility:hidden;" onclick="abrirCurriculo(event)">
-      <i class="fas fa-download"></i> Baixar Curr&#237;culo
+      <i class="fas fa-eye"></i> Visualizar Curr&#237;culo
     </a>
   </div>
 </div>
@@ -168,7 +168,6 @@
       </label>
       <span id="statusCurriculo" style="color:#aaa;font-size:0.85em;"></span>
     </div>
-    <p style="color:#aaa;font-size:0.8em;margin:4px 0 0">O botão "Baixar Currículo" aparecerá automaticamente para os visitantes após o upload.</p>
   </div>
 
 
@@ -210,6 +209,15 @@
     <input id="horaCert" type="number" placeholder="Ex: 40">
     <label>Ano</label>
     <input id="anoCert" type="number" placeholder="Ex: 2025">
+    <label>Imagem do certificado (opcional)</label>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px;">
+      <img id="previewCertImg" src="" style="width:100px;height:70px;border-radius:8px;object-fit:cover;border:2px solid #ff1493;display:none;">
+      <label class="admin-btn" style="cursor:pointer;padding:8px 18px;">
+        Escolher imagem
+        <input type="file" id="imagemCert" accept="image/*" style="display:none" onchange="previewCertImagem(this)">
+      </label>
+      <span id="uploadCertStatus" style="color:#aaa;font-size:0.85em;"></span>
+    </div>
     <button class="admin-btn" onclick="criarCertificado()">➕ Adicionar Certificado</button>
   </div>
 
@@ -225,6 +233,15 @@
     <input id="editCertHora" type="number" placeholder="Horas">
     <label>Ano</label>
     <input id="editCertAno" type="number" placeholder="Ano">
+    <label>Imagem do certificado (opcional)</label>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px;">
+      <img id="previewEditCertImg" src="" style="width:100px;height:70px;border-radius:8px;object-fit:cover;border:2px solid #ff1493;display:none;">
+      <label class="admin-btn" style="cursor:pointer;padding:8px 18px;">
+        Trocar imagem
+        <input type="file" id="editImagemCert" accept="image/*" style="display:none" onchange="previewEditCertImagem(this)">
+      </label>
+      <span id="editUploadCertStatus" style="color:#aaa;font-size:0.85em;"></span>
+    </div>
     <div style="display:flex;gap:10px;">
       <button class="admin-btn" onclick="salvarCertificado()">💾 Salvar</button>
       <button class="admin-btn" style="background:#555;" onclick="cancelarEdicao('cert')">Cancelar</button>
@@ -362,12 +379,25 @@
     }
   }
 
-  function abrirCurriculo(e) {
+  async function abrirCurriculo(e) {
     e.preventDefault();
     const btn = document.getElementById("btnDownloadCV");
-    const url = btn ? btn.href : null;
-    if (!url || url === "#" || url === window.location.href + "#") return;
-    window.open(url, "_blank");
+    const url = btn ? btn.getAttribute("href") : null;
+    if (!url || url === "#") return;
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = "Curriculo-Kathelyn-Zanin.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    } catch {
+      window.open(url, "_blank");
+    }
   }
 
   async function uploadCurriculoPDF(input) {
@@ -683,13 +713,17 @@
       });
 
       certificados.forEach(c => {
+        const btnVer = c.imagem
+          ? `<button onclick="abrirModalCert('${c.imagem}')" style="margin-top:10px;background:linear-gradient(135deg,#ff1493,#4b0082);border:none;border-radius:20px;padding:6px 16px;color:white;cursor:pointer;font-size:0.82em;">🖼 Ver Certificado</button>`
+          : "";
         container.innerHTML += `
-          <div class="cert-card">
+          <div class="cert-card" style="${c.imagem ? 'cursor:default' : ''}">
             <div class="cert-icon"><i class="fas fa-certificate"></i></div>
             <h3>${c.nome}</h3>
             <p><i class="fas fa-building" style="margin-right:5px;font-size:.8em"></i>${c.instituicao}</p>
             <p><i class="fas fa-clock" style="margin-right:5px;font-size:.8em"></i>${c.carga_horaria}h &nbsp;|&nbsp; ${c.ano}</p>
             <span class="cert-badge">Concluído</span>
+            ${btnVer}
             ${modoAdmin ? `
               <div class="admin-buttons" style="margin-top:10px">
                 <button class="btn-editar"  onclick="abrirEditarCert(${c.id})">✏️ Editar</button>
@@ -746,18 +780,68 @@
   }
 
   
+  function previewCertImagem(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const prev = document.getElementById("previewCertImg");
+      prev.src = e.target.result;
+      prev.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function previewEditCertImagem(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const prev = document.getElementById("previewEditCertImg");
+      prev.src = e.target.result;
+      prev.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function abrirModalCert(url) {
+    const modal = document.getElementById("certModal");
+    document.getElementById("certModalImg").src = url;
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  }
+
+  function fecharModal() {
+    document.getElementById("certModal").style.display = "none";
+    document.body.style.overflow = "";
+  }
+
   async function criarCertificado() {
     const nome          = document.getElementById("nomeCert").value.trim();
     const instituicao   = document.getElementById("instCert").value.trim();
     const carga_horaria = parseInt(document.getElementById("horaCert").value) || 0;
     const ano           = parseInt(document.getElementById("anoCert").value)  || 2025;
     if (!nome) { alert("Informe o nome do certificado."); return; }
-    const res = await adminFetch(`${API}/certificados`, "POST", { nome, instituicao, carga_horaria, ano });
+
+    const statusEl = document.getElementById("uploadCertStatus");
+    let imagem = "";
+    const file = document.getElementById("imagemCert").files[0];
+    if (file) {
+      statusEl.textContent = "Enviando imagem...";
+      imagem = await uploadCloudinary(file);
+      if (!imagem) { statusEl.textContent = "Falha no upload."; return; }
+      statusEl.textContent = "";
+    }
+
+    const res = await adminFetch(`${API}/certificados`, "POST", { nome, instituicao, carga_horaria, ano, imagem });
     if (!res.ok) { const e = await res.json(); alert("Erro: " + e.erro); return; }
-    document.getElementById("nomeCert").value = "";
-    document.getElementById("instCert").value = "";
-    document.getElementById("horaCert").value = "";
-    document.getElementById("anoCert").value  = "";
+    document.getElementById("nomeCert").value  = "";
+    document.getElementById("instCert").value  = "";
+    document.getElementById("horaCert").value  = "";
+    document.getElementById("anoCert").value   = "";
+    document.getElementById("imagemCert").value = "";
+    const prev = document.getElementById("previewCertImg");
+    prev.src = ""; prev.style.display = "none";
     mostrarTudo();
   }
 
@@ -771,7 +855,7 @@
   async function abrirEditarCert(id) {
     const res = await fetch(`${API}/certificados`);
     const data = await res.json();
-    _certsCache = data.certificados ?? data;  // corrige: API retorna { total, certificados }
+    _certsCache = data.certificados ?? data;
     const c = _certsCache.find(x => x.id === id);
     if (!c) return;
     document.getElementById("editCertId").value   = c.id;
@@ -779,8 +863,14 @@
     document.getElementById("editCertInst").value = c.instituicao;
     document.getElementById("editCertHora").value = c.carga_horaria;
     document.getElementById("editCertAno").value  = c.ano;
-    document.getElementById("edit-cert-section").style.display = "flex";
-    document.getElementById("edit-cert-section").scrollIntoView({ behavior: "smooth" });
+    document.getElementById("editImagemCert").value = "";
+    const prev = document.getElementById("previewEditCertImg");
+    if (c.imagem) { prev.src = c.imagem; prev.style.display = "block"; }
+    else          { prev.src = ""; prev.style.display = "none"; }
+    const section = document.getElementById("edit-cert-section");
+    section.style.display = "flex";
+    section.style.flexDirection = "column";
+    setTimeout(() => section.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
 
   async function salvarCertificado() {
@@ -789,7 +879,18 @@
     const instituicao   = document.getElementById("editCertInst").value.trim();
     const carga_horaria = parseInt(document.getElementById("editCertHora").value) || 0;
     const ano           = parseInt(document.getElementById("editCertAno").value)  || 2025;
-    await adminFetch(`${API}/certificados/${id}`, "PUT", { nome, instituicao, carga_horaria, ano });
+    const file2 = document.getElementById("editImagemCert").files[0];
+    const certAtual = _certsCache.find(x => x.id === id);
+    let imagem = certAtual ? (certAtual.imagem || "") : "";
+    if (file2) {
+      const statusEl = document.getElementById("editUploadCertStatus");
+      statusEl.textContent = "Enviando imagem...";
+      const url = await uploadCloudinary(file2);
+      if (!url) { statusEl.textContent = "Falha no upload."; return; }
+      imagem = url;
+      statusEl.textContent = "";
+    }
+    await adminFetch(`${API}/certificados/${id}`, "PUT", { nome, instituicao, carga_horaria, ano, imagem });
     cancelarEdicao("cert");
     mostrarTudo();
   }
@@ -899,5 +1000,13 @@ function logoutAdmin() {
     }
   });
 </script>
+
+
+<div id="certModal" onclick="fecharModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
+  <div onclick="event.stopPropagation()" style="position:relative;max-width:90vw;max-height:90vh;">
+    <img id="certModalImg" src="" alt="Certificado" style="max-width:90vw;max-height:85vh;border-radius:12px;box-shadow:0 0 40px rgba(255,20,147,0.4);">
+    <button onclick="fecharModal()" style="position:absolute;top:-16px;right:-16px;background:#ff1493;border:none;border-radius:50%;width:36px;height:36px;color:white;font-size:18px;cursor:pointer;line-height:1;">✕</button>
+  </div>
+</div>
 </body>
 </html>
