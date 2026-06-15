@@ -168,7 +168,6 @@
       </label>
       <span id="statusCurriculo" style="color:#aaa;font-size:0.85em;"></span>
     </div>
-    <p style="color:#aaa;font-size:0.8em;margin:4px 0 0">O botão "Baixar Currículo" aparecerá automaticamente para os visitantes após o upload.</p>
   </div>
 
 
@@ -341,8 +340,7 @@
   }
 
   // Upload de imagem para o Cloudinary
-  // IMPORTANTE: no painel do Cloudinary crie um Upload Preset chamado "portfolio_upload"
-  // Settings > Upload > Upload Presets > Add > Signing Mode: Unsigned
+  
   async function uploadCloudinary(file) {
     const formData = new FormData();
     formData.append("file", file);
@@ -386,7 +384,7 @@
     const url = btn ? btn.getAttribute("href") : null;
     if (!url || url === "#") return;
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { mode: "cors" });
       const blob = await res.blob();
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -397,6 +395,7 @@
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
     } catch {
+    
       window.open(url, "_blank");
     }
   }
@@ -407,16 +406,20 @@
     const statusEl = document.getElementById("statusCurriculo");
     statusEl.textContent = "Enviando PDF...";
     const formData = new FormData();
-    formData.append("pdf", file);
+    formData.append("file", file);
+    formData.append("upload_preset", "portfolio_upload");
+    formData.append("resource_type", "raw");
+    formData.append("public_id", "curriculo_kathelyn");
     try {
-      const res = await fetch(`${API}/curriculo/upload`, {
+      const res = await fetch("https://api.cloudinary.com/v1_1/djbuniysj/raw/upload", {
         method: "POST",
-        headers: { "X-Admin-Token": "1234" },
         body: formData
       });
       if (!res.ok) { statusEl.textContent = "Erro no upload."; return; }
       const data = await res.json();
-      const saveRes = await adminFetch(`${API}/curriculo`, "PUT", { url: data.url });
+      
+      const url = data.secure_url.replace("/raw/upload/", "/raw/upload/fl_attachment:Curriculo-Kathelyn-Zanin/");
+      const saveRes = await adminFetch(`${API}/curriculo`, "PUT", { url });
       if (!saveRes.ok) { statusEl.textContent = "Erro ao salvar URL."; return; }
       await carregarBotaoCurriculo();
       statusEl.textContent = "✅ PDF enviado com sucesso!";
@@ -648,7 +651,7 @@
     document.getElementById("editProjetoSite").value      = p.site      || "";
     document.getElementById("editProjetoEmpresa").value   = p.empresa   || "";
     document.getElementById("editProjetoProfessor").value = p.professor || "";
-    // Nunca colocar URL em input[type=file] — só limpar
+ 
     document.getElementById("editImagemProjeto").value    = "";
 
     const prev = document.getElementById("previewEditProjeto");
@@ -1005,7 +1008,7 @@ function logoutAdmin() {
   });
 </script>
 
-<!-- Modal visualizar imagem certificado -->
+
 <div id="certModal" onclick="fecharModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
   <div onclick="event.stopPropagation()" style="position:relative;max-width:90vw;max-height:90vh;">
     <img id="certModalImg" src="" alt="Certificado" style="max-width:90vw;max-height:85vh;border-radius:12px;box-shadow:0 0 40px rgba(255,20,147,0.4);">

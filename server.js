@@ -1,28 +1,14 @@
 const express = require('express');
 const cors    = require('cors');
-const path    = require('path');
-const fs      = require('fs');
-const multer  = require('multer');
 const { PrismaClient } = require('@prisma/client');
 require('dotenv').config();
 
 const app    = express();
 const prisma = new PrismaClient();
 
-// ── PASTA DE UPLOADS ─────────────────────────────────────────────────────────
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename:    (req, file, cb) => cb(null, 'curriculo.pdf')
-});
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
-
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use('/uploads', express.static(uploadDir));
 app.use(express.static(__dirname));
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
@@ -53,7 +39,6 @@ async function getCompetencias() {
 }
 
 // ── AUTH MIDDLEWARE ───────────────────────────────────────────────────────────
-
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "1234";
 
 function requireAdmin(req, res, next) {
@@ -207,7 +192,7 @@ app.delete('/projetos/:id', requireAdmin, async (req, res) => {
   const id = parseInt(req.params.id);
   if (!validarId(id)) return res.status(400).json({ erro: 'ID inválido.' });
   try {
-   
+    // Deleta tecnologias relacionadas antes (evita erro de FK se cascade não estiver no schema)
     await prisma.projeto_tecnologias.deleteMany({ where: { projeto_id: id } });
     await prisma.projetos.delete({ where: { id } });
     res.status(200).json({ mensagem: `Projeto ${id} removido com sucesso.` });
@@ -474,12 +459,6 @@ app.delete('/competencias/:tipo/:nome', requireAdmin, async (req, res) => {
 });
 
 // ── CURRÍCULO PDF ────────────────────────────────────────────────────────────
-
-app.post('/curriculo/upload', requireAdmin, upload.single('pdf'), (req, res) => {
-  if (!req.file) return res.status(400).json({ erro: 'Nenhum arquivo enviado.' });
-  const url = `${req.protocol}://${req.get('host')}/uploads/curriculo.pdf`;
-  res.json({ url });
-});
 
 app.get('/curriculo', async (req, res) => {
   try {
