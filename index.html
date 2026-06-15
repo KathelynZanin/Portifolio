@@ -39,6 +39,7 @@
       <div class="buttons" style="margin-top:16px">
         <a href="#projetos" class="btn">Ver Projetos</a>
         <a href="#contato"  class="btn">Entrar em Contato</a>
+        <a id="btnDownloadCV" href="#" class="btn" style="display:none;" download><i class="fas fa-download" style="margin-right:6px"></i>Baixar Curr&#237;culo</a>
       </div>
     </div>
   </div>
@@ -155,6 +156,18 @@
     <button class="admin-btn" onclick="salvarPortfolio()">💾 Salvar Portfólio</button>
   </div>
 
+  <div class="admin-section">
+    <h3>📄 Currículo em PDF</h3>
+    <label>Enviar arquivo PDF do currículo</label>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px;">
+      <label class="admin-btn" style="cursor:pointer;padding:8px 18px;">
+        Escolher PDF
+        <input type="file" id="inputCurriculoPDF" accept="application/pdf" style="display:none" onchange="uploadCurriculoPDF(this)">
+      </label>
+      <span id="statusCurriculo" style="color:#aaa;font-size:0.85em;"></span>
+    </div>
+  </div>
+
 
   <div class="admin-section">
     <h3>🎓 Adicionar Formação</h3>
@@ -248,10 +261,6 @@
     <input id="githubProjeto" placeholder="Link do GitHub">
     <label>Site / Vercel</label>
     <input id="vercelProjeto" placeholder="Link do site">
-    <label>Empresa Parceira (opcional)</label>
-    <input id="empresaProjeto" placeholder="Ex: Akaer">
-    <label>Professor Responsável (opcional)</label>
-    <input id="professorProjeto" placeholder="Ex: Prof. João Silva">
     <button class="admin-btn" onclick="criarProjeto()">➕ Adicionar Projeto</button>
   </div>
 
@@ -279,10 +288,6 @@
     <input id="editProjetoGithub" placeholder="Link GitHub">
     <label>Site / Vercel</label>
     <input id="editProjetoSite" placeholder="Link do site">
-    <label>Empresa Parceira (opcional)</label>
-    <input id="editProjetoEmpresa" placeholder="Ex: Akaer">
-    <label>Professor Responsável (opcional)</label>
-    <input id="editProjetoProfessor" placeholder="Ex: Prof. João Silva">
     <div style="display:flex;gap:10px;">
       <button class="admin-btn" onclick="salvarProjeto()">💾 Salvar</button>
       <button class="admin-btn" style="background:#555;" onclick="cancelarEdicao('projeto')">Cancelar</button>
@@ -328,6 +333,40 @@
   }
 
   
+  // ── CURRÍCULO PDF ──────────────────────────────────────────────────────────
+  function carregarBotaoCurriculo() {
+    const url = localStorage.getItem("curriculoPDFUrl");
+    const btn = document.getElementById("btnDownloadCV");
+    if (url && btn) {
+      btn.href = url;
+      btn.style.display = "inline-block";
+    }
+  }
+
+  async function uploadCurriculoPDF(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const statusEl = document.getElementById("statusCurriculo");
+    statusEl.textContent = "Enviando PDF...";
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "portfolio_upload");
+    formData.append("resource_type", "raw");
+    try {
+      const res = await fetch("https://api.cloudinary.com/v1_1/djbuniysj/raw/upload", {
+        method: "POST",
+        body: formData
+      });
+      if (!res.ok) { statusEl.textContent = "Erro no upload."; return; }
+      const data = await res.json();
+      localStorage.setItem("curriculoPDFUrl", data.secure_url);
+      carregarBotaoCurriculo();
+      statusEl.textContent = "✅ PDF enviado com sucesso!";
+    } catch (e) {
+      statusEl.textContent = "Erro: " + e.message;
+    }
+  }
+
   let portfolio = JSON.parse(localStorage.getItem("portfolio")) || {
     nome: "Kathelyn Cauane de Oliveira Zanin",
     titulo: "Dev Iniciante | Estudante de DSM | Explorando o mundo do desenvolvimento",
@@ -436,45 +475,11 @@
         const imgHtml  = p.imagem
           ? `<img src="${p.imagem}" alt="${p.nome}" style="width:100%;height:160px;object-fit:cover;border-radius:12px;margin:12px 0">`
           : "";
-        const empresaHtml = p.empresa ? `
-          <div style="
-            display:flex;align-items:center;gap:10px;
-            background:rgba(255,20,147,0.1);
-            border:1px solid rgba(255,20,147,0.45);
-            border-left:4px solid #ff1493;
-            border-radius:0 10px 10px 0;
-            padding:10px 14px;margin:12px 0;">
-            <div style="width:34px;height:34px;border-radius:50%;background:#ff1493;
-              display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🏢</div>
-            <div>
-              <p style="font-size:10px;color:#ff69b4;text-transform:uppercase;
-                letter-spacing:1px;font-weight:bold;margin:0 0 2px">Empresa Parceira</p>
-              <p style="font-size:14px;font-weight:bold;color:#fff;margin:0">${p.empresa}</p>
-            </div>
-          </div>` : "";
-        const professorHtml = p.professor ? `
-          <div style="
-            display:flex;align-items:center;gap:10px;
-            background:rgba(75,0,130,0.18);
-            border:1px solid rgba(161,0,255,0.4);
-            border-left:4px solid #a100ff;
-            border-radius:0 10px 10px 0;
-            padding:10px 14px;margin:8px 0;">
-            <div style="width:34px;height:34px;border-radius:50%;background:#a100ff;
-              display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">👩‍🏫</div>
-            <div>
-              <p style="font-size:10px;color:#d580ff;text-transform:uppercase;
-                letter-spacing:1px;font-weight:bold;margin:0 0 2px">Professor Responsável</p>
-              <p style="font-size:14px;font-weight:bold;color:#fff;margin:0">${p.professor}</p>
-            </div>
-          </div>` : "";
         container.innerHTML += `
           <div class="project">
             <h3 style="margin:0 0 4px">${p.nome}</h3>
             ${imgHtml}
             <p style="margin:8px 0">${p.descricao}</p>
-            ${empresaHtml}
-            ${professorHtml}
             <div class="tags" style="justify-content:center;margin:10px 0">${tecsTags}</div>
             <div style="display:flex;justify-content:center;gap:10px;margin-top:10px">
               ${p.github ? `<a href="${p.github}" target="_blank">GitHub</a>` : ""}
@@ -498,8 +503,6 @@
     const tecs      = document.getElementById("tecsProjeto").value.split(",").map(t => t.trim()).filter(Boolean);
     const github    = document.getElementById("githubProjeto").value.trim();
     const site      = document.getElementById("vercelProjeto").value.trim();
-    const empresa   = document.getElementById("empresaProjeto").value.trim();
-    const professor = document.getElementById("professorProjeto").value.trim();
     const file = document.getElementById("imagemProjeto").files[0];
 
     if (!nome) { alert("Informe o nome do projeto."); return; }
@@ -513,15 +516,13 @@
       statusEl.textContent = "";
     }
 
-    const res = await adminFetch(`${API}/projetos`, "POST", { nome, descricao, tecnologias: tecs, imagem, github, site, empresa, professor });
+    const res = await adminFetch(`${API}/projetos`, "POST", { nome, descricao, tecnologias: tecs, imagem, github, site });
     if (!res.ok) { const e = await res.json(); alert("Erro: " + e.erro); return; }
     document.getElementById("nomeProjeto").value      = "";
     document.getElementById("descricaoProjeto").value = "";
     document.getElementById("tecsProjeto").value      = "";
     document.getElementById("githubProjeto").value    = "";
     document.getElementById("vercelProjeto").value    = "";
-    document.getElementById("empresaProjeto").value   = "";
-    document.getElementById("professorProjeto").value = "";
     document.getElementById("imagemProjeto").value    = "";
     const prev = document.getElementById("previewProjeto");
     prev.src = ""; prev.style.display = "none";
@@ -547,11 +548,9 @@
     document.getElementById("editProjetoNome").value    = p.nome;
     document.getElementById("editProjetoDesc").value    = p.descricao;
     document.getElementById("editProjetoTecs").value    = (p.tecnologias || []).join(", ");
-    document.getElementById("editProjetoGithub").value    = p.github    || "";
-    document.getElementById("editProjetoSite").value      = p.site      || "";
-    document.getElementById("editProjetoEmpresa").value   = p.empresa   || "";
-    document.getElementById("editProjetoProfessor").value = p.professor || "";
-    // NÃO atribua p.imagem ao input[type=file] — browsers bloqueiam por segurança.
+    document.getElementById("editProjetoGithub").value  = p.github;
+    document.getElementById("editProjetoSite").value    = p.site;
+    document.getElementById("editImagemProjeto").value  = p.imagem || "";
 
     const prev = document.getElementById("previewEditProjeto");
     if (p.imagem) { prev.src = p.imagem; prev.style.display = "block"; }
@@ -568,8 +567,6 @@
     const tecs    = document.getElementById("editProjetoTecs").value.split(",").map(t => t.trim()).filter(Boolean);
     const github  = document.getElementById("editProjetoGithub").value.trim();
     const site    = document.getElementById("editProjetoSite").value.trim();
-    const empresa   = document.getElementById("editProjetoEmpresa").value.trim();
-    const professor = document.getElementById("editProjetoProfessor").value.trim();
     const file2        = document.getElementById("editImagemProjeto").files[0];
     const projetoAtual = _projetosCache.find(x => x.id === id);
     let imagem         = projetoAtual ? projetoAtual.imagem : "";
@@ -583,7 +580,7 @@
       statusEl.textContent = "";
     }
 
-    const res = await adminFetch(`${API}/projetos/${id}`, "PUT", { nome, descricao: desc, tecnologias: tecs, imagem, github, site, empresa, professor });
+    const res = await adminFetch(`${API}/projetos/${id}`, "PUT", { nome, descricao: desc, tecnologias: tecs, imagem, github, site });
     if (!res.ok) { const e = await res.json(); alert("Erro: " + e.erro); return; }
     cancelarEdicao("projeto");
     mostrarProjetos();
@@ -820,6 +817,7 @@ function logoutAdmin() {
 
   document.addEventListener("DOMContentLoaded", function () {
     carregarPortfolio();
+    carregarBotaoCurriculo();
     atualizarSaudacao();
     mostrarProjetos();
     mostrarTudo();
