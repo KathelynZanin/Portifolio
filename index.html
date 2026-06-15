@@ -362,13 +362,20 @@
     }
   }
 
-  function abrirCurriculo(e) {
-    e.preventDefault();
-    const btn = document.getElementById("btnDownloadCV");
-    const url = btn ? btn.href : null;
-    if (!url || url === "#" || url === window.location.href + "#") return;
-    window.open(url, "_blank");
-  }
+ function abrirCurriculo(e) {
+  e.preventDefault();
+  const btn = document.getElementById("btnDownloadCV");
+  const url = btn ? btn.href : null;
+  if (!url || url === "#" || url === window.location.href + "#") return;
+  
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "Curriculo-Kathelyn-Zanin.pdf";
+  link.target = "_blank";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 
   async function uploadCurriculoPDF(input) {
     const file = input.files[0];
@@ -386,7 +393,7 @@
       });
       if (!res.ok) { statusEl.textContent = "Erro no upload."; return; }
       const data = await res.json();
-      // Salva a URL na API (visível para todos os visitantes)
+      
       const saveRes = await adminFetch(`${API}/curriculo`, "PUT", { url: data.secure_url });
       if (!saveRes.ok) { statusEl.textContent = "Erro ao salvar URL no servidor."; return; }
       await carregarBotaoCurriculo();
@@ -620,7 +627,7 @@
     document.getElementById("editProjetoEmpresa").value = p.empresa   || "";
     document.getElementById("editProjetoProfessor").value = p.professor || "";
 
-    // Limpa o input de arquivo (não tenta colocar URL nele)
+   
     document.getElementById("editImagemProjeto").value = "";
 
     const prev = document.getElementById("previewEditProjeto");
@@ -777,7 +784,7 @@
   async function abrirEditarCert(id) {
     const res = await fetch(`${API}/certificados`);
     const data = await res.json();
-    _certsCache = data.certificados ?? data;  // corrige: API retorna { total, certificados }
+    _certsCache = data.certificados ?? data;  
     const c = _certsCache.find(x => x.id === id);
     if (!c) return;
     document.getElementById("editCertId").value   = c.id;
