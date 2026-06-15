@@ -47,6 +47,8 @@ model projetos {
   github              String?               @default("") @db.VarChar(255)
   site                String?               @default("") @db.VarChar(255)
   criado_em           DateTime?             @default(now()) @db.Timestamp(0)
+  empresa             String                @default("")  
+  professor           String                @default("")  
   projeto_tecnologias projeto_tecnologias[]
 }
 

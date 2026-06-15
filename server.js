@@ -142,6 +142,8 @@ app.post('/projetos',      requireAdmin, async (req, res) => {
         imagem:    dados.imagem    || '',
         github:    dados.github    || '',
         site:      dados.site      || '',
+        empresa:   dados.empresa   || '',
+        professor: dados.professor || '',
         projeto_tecnologias: {
           create: tecnologias.map(t => ({ tecnologia: t }))
         }
@@ -168,7 +170,9 @@ app.put('/projetos/:id',    requireAdmin, async (req, res) => {
         descricao: dados.descricao     ?? atual.descricao,
         imagem:    dados.imagem        ?? atual.imagem,
         github:    dados.github        ?? atual.github,
-        site:      dados.site          ?? atual.site
+        site:      dados.site          ?? atual.site,
+        empresa:   dados.empresa       ?? atual.empresa,
+        professor: dados.professor     ?? atual.professor
       }
     });
 
