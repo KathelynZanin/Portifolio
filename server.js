@@ -457,6 +457,33 @@ app.delete('/competencias/:tipo/:nome', requireAdmin, async (req, res) => {
   }
 });
 
+// ── CURRÍCULO PDF ─────────────────────────────────────────────────────────────
+
+app.get('/curriculo', async (req, res) => {
+  try {
+    const row = await prisma.configuracoes.findUnique({ where: { chave: 'curriculo_url' } });
+    res.status(200).json({ url: row ? row.valor : null });
+  } catch (err) {
+    // Se a tabela ainda não existir, devolve null sem quebrar
+    res.status(200).json({ url: null });
+  }
+});
+
+app.put('/curriculo', requireAdmin, async (req, res) => {
+  const { url } = req.body || {};
+  if (!url?.trim()) return res.status(400).json({ erro: "Campo 'url' é obrigatório." });
+  try {
+    await prisma.configuracoes.upsert({
+      where:  { chave: 'curriculo_url' },
+      update: { valor: url.trim() },
+      create: { chave: 'curriculo_url', valor: url.trim() }
+    });
+    res.status(200).json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
 // ── START ─────────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 5000;

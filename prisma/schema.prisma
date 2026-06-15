@@ -62,3 +62,10 @@ enum competencias_tipo {
   tecnica
   interpessoal
 }
+
+model configuracoes {
+  chave String @id
+  valor String
+
+  @@map("configuracoes")
+}
