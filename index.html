@@ -160,14 +160,10 @@
 
   <div class="admin-section">
     <h3>📄 Currículo em PDF</h3>
-    <label>Enviar arquivo PDF do currículo</label>
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px;">
-      <label class="admin-btn" style="cursor:pointer;padding:8px 18px;">
-        Escolher PDF
-        <input type="file" id="inputCurriculoPDF" accept="application/pdf" style="display:none" onchange="uploadCurriculoPDF(this)">
-      </label>
-      <span id="statusCurriculo" style="color:#aaa;font-size:0.85em;"></span>
-    </div>
+    <label>Cole aqui o link do Google Drive</label>
+    <input id="inputCurriculoURL" placeholder="https://drive.google.com/file/d/.../view">
+    <button class="admin-btn" onclick="salvarURLCurriculo()">💾 Salvar Link do Currículo</button>
+    <span id="statusCurriculo" style="color:#aaa;font-size:0.85em;margin-top:6px;"></span>
   </div>
 
 
@@ -327,7 +323,7 @@
 <script>
   const API = "https://portifolio-production-3e83.up.railway.app";
 
-  // Helper para fetch autenticado (POST/PUT/DELETE)
+ 
   function adminFetch(url, method, body) {
     return fetch(url, {
       method,
@@ -339,7 +335,6 @@
     });
   }
 
-  // Upload de imagem para o Cloudinary
   
   async function uploadCloudinary(file) {
     const formData = new FormData();
@@ -400,32 +395,15 @@
     }
   }
 
-  async function uploadCurriculoPDF(input) {
-    const file = input.files[0];
-    if (!file) return;
+  async function salvarURLCurriculo() {
+    const url = document.getElementById("inputCurriculoURL").value.trim();
     const statusEl = document.getElementById("statusCurriculo");
-    statusEl.textContent = "Enviando PDF...";
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "portfolio_upload");
-    formData.append("resource_type", "raw");
-    formData.append("public_id", "curriculo_kathelyn");
-    try {
-      const res = await fetch("https://api.cloudinary.com/v1_1/djbuniysj/raw/upload", {
-        method: "POST",
-        body: formData
-      });
-      if (!res.ok) { statusEl.textContent = "Erro no upload."; return; }
-      const data = await res.json();
-      
-      const url = data.secure_url.replace("/raw/upload/", "/raw/upload/fl_attachment:Curriculo-Kathelyn-Zanin/");
-      const saveRes = await adminFetch(`${API}/curriculo`, "PUT", { url });
-      if (!saveRes.ok) { statusEl.textContent = "Erro ao salvar URL."; return; }
-      await carregarBotaoCurriculo();
-      statusEl.textContent = "✅ PDF enviado com sucesso!";
-    } catch (e) {
-      statusEl.textContent = "Erro: " + e.message;
-    }
+    if (!url) { statusEl.textContent = "Cole uma URL válida."; return; }
+    statusEl.textContent = "Salvando...";
+    const res = await adminFetch(`${API}/curriculo`, "PUT", { url });
+    if (!res.ok) { statusEl.textContent = "Erro ao salvar."; return; }
+    await carregarBotaoCurriculo();
+    statusEl.textContent = "✅ Link salvo com sucesso!";
   }
 
   let portfolio = JSON.parse(localStorage.getItem("portfolio")) || {
