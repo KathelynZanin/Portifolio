@@ -373,26 +373,12 @@
     }
   }
 
-  async function abrirCurriculo(e) {
+  function abrirCurriculo(e) {
     e.preventDefault();
     const btn = document.getElementById("btnDownloadCV");
     const url = btn ? btn.getAttribute("href") : null;
     if (!url || url === "#") return;
-    try {
-      const res = await fetch(url, { mode: "cors" });
-      const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = "Curriculo-Kathelyn-Zanin.pdf";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
-    } catch {
-    
-      window.open(url, "_blank");
-    }
+    window.open(url, "_blank");
   }
 
   async function salvarURLCurriculo() {
